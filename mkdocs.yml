@@ -1,0 +1,10 @@
+site_name: Ornament documentation
+
+pages:
+
+- [index.md, Introduction, Quick start]
+
+- [basic/overview.md, Basic, Overview of concepts and functionalities]
+- [basic/generating.md, Basic, Generating ORM models]
+
+theme: readthedocs
