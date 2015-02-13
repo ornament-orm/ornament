@@ -1,0 +1,23 @@
+{
+    "name": "monomelodies/ornament",
+    "description": "PHP5 ORM toolkit",
+    "license": "MIT",
+    "keywords": ["php","orm"],
+    "authors": [
+        {
+            "name": "Marijn Ophorst",
+            "email": "marijn@monomelodies.nl"
+        }
+    ],
+    "require": {
+        "php": ">=5.4"
+    },
+    "require-dev": {
+        "phpunit/phpunit": ">=4.0.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Ornament\\": "src"
+        }
+    }
+}    
