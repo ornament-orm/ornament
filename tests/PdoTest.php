@@ -1,6 +1,6 @@
 <?php
 
-class SimpleModel
+class MyTableModel
 {
     use Ornament\Pdo;
 
@@ -10,10 +10,7 @@ class SimpleModel
 
     public function __construct(PDO $pdo)
     {
-        $this->addAdapter($pdo)
-             ->setTable('mytable')
-             ->setFields('name', 'comment')
-             ->setPrimaryKey('id');
+        $this->addAdapter($pdo);
     }
 }
 
@@ -22,15 +19,15 @@ class PdoTest extends PHPUnit_Extensions_Database_TestCase
     private static $pdo;
     private $conn;
 
-    public function testSimpleModel()
+    public function testModel()
     {
-        $model = new SimpleModel(self::$pdo);
+        $model = new MyTableModel(self::$pdo);
         $model->name = 'Marijn';
         $model->comment = 'Hi Ornament';
         $this->assertTrue($model->dirty());
         $model->save();
         $this->assertFalse($model->dirty());
-        $stmt = self::$pdo->prepare("SELECT * FROM mytable");
+        $stmt = self::$pdo->prepare("SELECT * FROM my_table");
         $stmt->execute();
         $rows = $stmt->fetchAll();
         $this->assertEquals(1, count($rows));
