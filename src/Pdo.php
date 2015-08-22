@@ -15,10 +15,7 @@ trait Pdo
     {
         $adapter = new Adapter\Pdo($pdo);
         $adapter->setTable($this->guessTableName());
-        $fields = [];
-        foreach (Repository::getProperties($this) as $prop) {
-            $fields[] = $prop->getName();
-        }
+        $fields = Repository::getProperties($this);
         if (in_array('id', $fields)) {
             $adapter->setPrimaryKey('id');
             foreach ($fields as $key => $value) {
