@@ -5,3 +5,8 @@ CREATE TABLE my_table (
     comment VARCHAR(140)
 );
 
+CREATE TABLE linked_table (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    mytable INTEGER NOT NULL REFERENCES my_table(id),
+);
+
