@@ -10,3 +10,5 @@ mapping through their names. (A common example would be a model of pages in
 multiple languages, where the data might be stored in a `page` table and a
 `page_i18n` table for the language-specific data.)
 
+Also, the use of extensive and/or complicated config files sucks. (XML? This
+is 2015, people!)
