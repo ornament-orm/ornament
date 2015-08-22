@@ -1,0 +1,7 @@
+
+CREATE TABLE my_table (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name VARCHAR(30),
+    comment VARCHAR(140)
+);
+
