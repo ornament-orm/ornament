@@ -3,6 +3,7 @@
 namespace Ornament;
 
 use ReflectionClass;
+use ReflectionMethod;
 use ReflectionProperty;
 
 abstract class Repository
