@@ -18,20 +18,18 @@ is 2015, people!)
 ### Composer (recommended)
 Add "monomelodies/ornament" to your `composer.json` requirements:
 
-    {
-        "require": {
-            "monomelodies/ornament": ">=0.0.1"
-        }
-    }
+```bash
+$ composer require monomelodies/ornament
+```
 
 ### Manual installation
 1. Get the code;
-  1. Clone the repository, e.g. from GitHub;
-  2. Download the ZIP (e.g. from Github) and extract.
+    1. Clone the repository, e.g. from GitHub;
+    2. Download the ZIP (e.g. from Github) and extract.
 2. Make your project recognize Ornament:
-  1. Register `/path/to/ornament/src` for the namespace `Ornament\\` in your
-     PSR-4 autoloader (recommended);
-  2. Alternatively, manually `include` the files you need.
+    1. Register `/path/to/ornament/src` for the namespace `Ornament\\` in your
+       PSR-4 autoloader (recommended);
+    2. Alternatively, manually `include` the files you need.
 
 ## Basic usage
 Ornament models (or "entities" if you're used to Doctrine-speak) are really
