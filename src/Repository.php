@@ -61,14 +61,24 @@ abstract class Repository
         $class = get_class($obj);
         if (!isset(self::$reflected[$class])) {
             $reflected = new ReflectionClass($obj);
-            self::$reflected[$class] = $reflected->getProperties(
+            self::$reflected[$class] = [];
+            foreach ($reflected->getProperties(
                 ReflectionProperty::IS_PUBLIC
-            );
+            ) as $prop) {
+                self::$reflected[$class][] = $prop->getName();
+            }
             foreach ($reflected->getMethods(
                 ReflectionMethod::IS_PUBLIC
             ) as $method) {
-                
-            }                
+                if (preg_match('@^[gs]et@', $method->getName())) {
+                    self::$reflected[$class][] = Helper::normalize(preg_replace(
+                        '@^[gs]et@',
+                        '',
+                        $method->getName()
+                    ));
+                }
+            }
+            self::$reflected[$class] = array_unique(self::$reflected[$class]);
         }
         return self::$reflected[$class];
     }
