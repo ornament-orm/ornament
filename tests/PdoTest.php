@@ -27,13 +27,17 @@ class PdoTest extends PHPUnit_Extensions_Database_TestCase
         $model = new SimpleModel(self::$pdo);
         $model->name = 'Marijn';
         $model->comment = 'Hi Ornament';
+        $this->assertTrue($model->dirty());
         $model->save();
+        $this->assertFalse($model->dirty());
         $stmt = self::$pdo->prepare("SELECT * FROM mytable");
         $stmt->execute();
         $rows = $stmt->fetchAll();
         $this->assertEquals(1, count($rows));
         $model->comment = 'Awesome';
+        $this->assertTrue($model->dirty());
         $model->save();
+        $this->assertFalse($model->dirty());
         $stmt->execute();
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         $this->assertEquals('Awesome', $row['comment']);
