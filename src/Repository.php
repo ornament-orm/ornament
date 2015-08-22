@@ -55,7 +55,7 @@ abstract class Repository
         return $data;
     }
 
-    private static function getProperties($obj)
+    public static function getProperties($obj)
     {
         $class = get_class($obj);
         if (!isset(self::$reflected[$class])) {
