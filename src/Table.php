@@ -17,14 +17,7 @@ trait Table
         if (!isset($guesser)) {
             $guesser = function ($class) {
                 $class = preg_replace('@\\\\?Model$@', '', $class);
-                $table = strtolower(preg_replace_callback(
-                    '@([a-z0-9])(_|\\\\)?([A-Z])@',
-                    function ($match) {
-                        return $match[1].'_'.strtolower($match[3]);
-                    },
-                    $class
-                ));
-                return trim(strtolower($table), '_');
+                return Helper::normalize($class);
             };
         }
         return $guesser(get_class($this));
