@@ -7,4 +7,7 @@ pages:
 - [basic/overview.md, Basic, Overview of concepts and functionalities]
 - [basic/generating.md, Basic, Generating ORM models]
 
+- [tutorial/dependencies.md, "Tutorial: writing a simple Twitter client", Dependencies]
+- [tutorial/tweet.md, "Tutorial: writing a simple Twitter client", Tweet model]
+
 theme: readthedocs
