@@ -8,26 +8,23 @@ in another way. Two common uses of this are:
 2. One-to-many foreign key relations which get filled in automatically.
 
 ## Defining a virtual field
-`use` the `Ornament\Virtual` trait and, in your constructor, call the new
-`addVirtual` method this exposes:
+Virtual fields are supported out-of-the-box. To use them, simply declare
+methods called `getNameOfField` and possibly `setNameOfField` (for read/write
+virtual properties) on your model:
 
 ```php
 <?php
 
-use Ornament\Virtual;
-
 class MyModel
 {
-    public function __construct(PDO $pdo)
+    public function getNameOfField()
     {
-        $this->addAdapter($pdo);
-        $this->addVirtual(
-            'virtual_field',
-            function ($value) {
-                // Do what you need with $value
-                return $value;
-            }
-        );
+        return 1; // Obviously, this needs to be computed.
+    }
+
+    public function setNameOfField($value)
+    {
+        // This should re-compute.
     }
 }
 ```
