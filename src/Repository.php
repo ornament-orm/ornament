@@ -63,6 +63,11 @@ abstract class Repository
             self::$reflected[$class] = $reflected->getProperties(
                 ReflectionProperty::IS_PUBLIC
             );
+            foreach ($reflected->getMethods(
+                ReflectionMethod::IS_PUBLIC
+            ) as $method) {
+                
+            }                
         }
         return self::$reflected[$class];
     }
