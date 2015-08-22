@@ -1,0 +1,8 @@
+
+DROP TABLE IF EXISTS mytable;
+CREATE TABLE mytable (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name VARCHAR(30),
+    comment VARCHAR(140)
+);
+
