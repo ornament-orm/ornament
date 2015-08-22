@@ -29,7 +29,11 @@ class MyModel
 }
 ```
 
-The `addVirtual` method takes two arguments: a string with the name of the
-virtual field, and a function that acts as a setter. This function should
-return the actual value to set.
+The `nameOfField` part of the methods map following the same logic as the
+default automagic table guesser, i.e. `nameOfField` becomes `name_of_field` as
+a property name.
+
+> This is done to reflect the fact that whilst modern PHP applications prefer
+> the camelCased style for properties, data sources generally don't (this goes
+> for SQL databases as well as NoSQL, APIs and even XML or CSV data sources).
 
