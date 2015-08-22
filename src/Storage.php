@@ -10,12 +10,24 @@ trait Storage
         return $adapter;
     }
 
-    public function save($pk = null)
+    public function save()
     {
         $adapters = Repository::getAdapters($this);
         $errors = [];
         foreach ($adapters as $adapter) {
-            if ($error = $adapter->store($this, $pk)) {
+            if ($error = $adapter->store($this)) {
+                $errors[] = $error;
+            }
+        }
+        return $errors ? $errors : null;
+    }
+
+    public function delete()
+    {
+        $adapters = Repository::getAdapters($this);
+        $errors = [];
+        foreach ($adapters as $adapter) {
+            if ($error = $adapter->delete($this)) {
                 $errors[] = $error;
             }
         }
