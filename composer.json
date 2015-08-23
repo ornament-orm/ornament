@@ -10,8 +10,7 @@
         }
     ],
     "require": {
-        "php": ">=5.5",
-        "monomelodies/dabble": "@dev"
+        "php": ">=5.5"
     },
     "require-dev": {
         "phpunit/phpunit": ">=4.0",

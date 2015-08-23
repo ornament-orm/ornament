@@ -12,14 +12,14 @@ abstract class Repository
     private static $cleanModels = [];
     private static $reflected = [];
 
-    public static function registerAdapter($obj, $adapter)
+    public static function registerAdapter($obj, $adapter, $id)
     {
         self::markClean($obj);
         $key = spl_object_hash($obj);
         if (!isset(self::$adapters[$key])) {
             self::$adapters[$key] = [];
         }
-        $adapter_key = spl_object_hash($adapter);
+        $adapter_key = spl_object_hash($adapter)."#$id";
         self::$adapters[$key][$adapter_key] = $adapter;
     }
 
@@ -50,8 +50,7 @@ abstract class Repository
         $properties = self::getProperties($obj);
         $data = [];
         foreach ($properties as $prop) {
-            $name = $prop->getName();
-            $data[$name] = $obj->$name;
+            $data[$prop] = $obj->$prop;
         }
         return $data;
     }
@@ -61,14 +60,24 @@ abstract class Repository
         $class = get_class($obj);
         if (!isset(self::$reflected[$class])) {
             $reflected = new ReflectionClass($obj);
-            self::$reflected[$class] = $reflected->getProperties(
+            self::$reflected[$class] = [];
+            foreach ($reflected->getProperties(
                 ReflectionProperty::IS_PUBLIC
-            );
+            ) as $prop) {
+                self::$reflected[$class][] = $prop->getName();
+            }
             foreach ($reflected->getMethods(
                 ReflectionMethod::IS_PUBLIC
             ) as $method) {
-                
-            }                
+                if (preg_match('@^[gs]et@', $method->getName())) {
+                    self::$reflected[$class][] = Helper::normalize(preg_replace(
+                        '@^[gs]et@',
+                        '',
+                        $method->getName()
+                    ));
+                }
+            }
+            self::$reflected[$class] = array_unique(self::$reflected[$class]);
         }
         return self::$reflected[$class];
     }

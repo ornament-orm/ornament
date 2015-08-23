@@ -14,6 +14,45 @@ class MyTableModel
     }
 }
 
+class LinkedTableModel
+{
+    use Ornament\Pdo;
+
+    public $id;
+    public $mytable;
+    public $points;
+
+    public function __construct(PDO $pdo)
+    {
+        $this->addAdapter($pdo);
+    }
+
+    public function getPercentage()
+    {
+        return round(($this->points / 5) * 100);
+    }
+}
+
+class BitflagModel
+{
+    use Ornament\Pdo;
+    use Ornament\Bitflag;
+
+    const STATUS_NICE = 1;
+    const STATUS_CATS = 2;
+    const STATUS_CODE = 4;
+
+    public $status;
+
+    public function __construct(PDO $pdo)
+    {
+        $this->addAdapter($pdo);
+        $this->addBitflag('nice', self::STATUS_NICE, 'status');
+        $this->addBitflag('cats', self::STATUS_CATS, 'status');
+        $this->addBitflag('code', self::STATUS_CODE, 'status');
+    }
+}
+
 class PdoTest extends PHPUnit_Extensions_Database_TestCase
 {
     private static $pdo;
@@ -41,6 +80,34 @@ class PdoTest extends PHPUnit_Extensions_Database_TestCase
         $stmt->execute();
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         $this->assertEquals('Awesome', $row['comment']);
+    }
+
+    /**
+     * @expectedException Ornament\Exception\UnknownVirtualProperty
+     */
+    public function testVirtuals()
+    {
+        $model = new MyTableModel(self::$pdo);
+        $model->name = 'Marijn';
+        $model->comment = 'Hi Ornament';
+        $model->save();
+        $linked = new LinkedTableModel(self::$pdo);
+        $linked->mytable = $model->id;
+        $linked->points = 4;
+        $linked->save();
+        $this->assertEquals(80, $linked->percentage);
+        $linked->percentage = 70;
+    }
+
+    public function testBitflags()
+    {
+        $model = new BitflagModel(self::$pdo);
+        $model->code = true;
+        $model->cats = true;
+        $this->assertEquals(6, $model->status);
+        $model->code = false;
+        $model->nice = true;
+        $this->assertEquals(3, $model->status);
     }
 
     public function getConnection()
