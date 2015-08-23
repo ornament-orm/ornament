@@ -41,20 +41,34 @@ trait Storage
 
     public function __get($prop)
     {
-        $method = 'get'.Helper::denormalize($prop);
+        $method = 'get'.ucfirst(Helper::denormalize($prop));
         if (method_exists($this, $method)) {
             return $this->$method();
         }
-        throw new UnknownVirtualPropertyException;
+        if (method_exists($this, 'callback')) {
+            try {
+                return $this->callback($method);
+            } catch (Exception\UndefinedCallback $e) {
+                var_dump($method);
+            }
+        }
+        throw new Exception\UnknownVirtualProperty;
     }
 
     public function __set($prop, $value)
     {
-        $method = 'set'.Helper::denormalize($prop);
+        $method = 'set'.ucfirst(Helper::denormalize($prop));
         if (method_exists($this, $method)) {
             return $this->$method($value);
         }
-        throw new UnknownVirtualPropertyException;
+        if (method_exists($this, 'callback')) {
+            try {
+                return $this->callback($method, [$value]);
+            } catch (Exception\UndefinedCallback $e) {
+                var_dump($method);
+            }
+        }
+        throw new Exception\UnknownVirtualProperty;
     }
 }
 
