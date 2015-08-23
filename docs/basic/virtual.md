@@ -118,5 +118,6 @@ class UserModel
 ```
 
 These calls do the same as the manual getter/setter from the previous example,
-only in much less lines of code. Which is good, because we're lazy.
+only in much less lines of code. Which is good, because we're lazy. The
+arguments are `property`, `bit` and `source property`.
 
