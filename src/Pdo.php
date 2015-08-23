@@ -11,10 +11,13 @@ trait Pdo
     }
     use Table;
 
-    public function addAdapter(Base $pdo)
+    public function addAdapter(Base $pdo, $id = null)
     {
         $adapter = new Adapter\Pdo($pdo);
-        $adapter->setTable($this->guessTableName());
+        if (!isset($id)) {
+            $id = $this->guessTableName();
+        }
+        $adapter->setTable($id);
         $fields = Repository::getProperties($this);
         if (in_array('id', $fields)) {
             $adapter->setPrimaryKey('id');
@@ -25,7 +28,7 @@ trait Pdo
             }
         }
         call_user_func_array([$adapter, 'setFields'], $fields);
-        return $this->addPdoAdapter($adapter);
+        return $this->addPdoAdapter($adapter, $id);
     }
 }
 
