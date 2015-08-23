@@ -8,5 +8,10 @@ CREATE TABLE my_table (
 CREATE TABLE linked_table (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     mytable INTEGER NOT NULL REFERENCES my_table(id),
+    points INTEGER NOT NULL
+);
+
+CREATE TABLE bitflag (
+    status INTEGER NOT NULL DEFAULT NULL
 );
 
