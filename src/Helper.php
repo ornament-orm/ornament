@@ -43,7 +43,7 @@ abstract class Helper
         return preg_replace_callback(
             '@_([a-z])@',
             function($match) {
-                return '_'.strtoupper($match[1])
+                return '_'.strtoupper($match[1]);
             },
             $input
         );
