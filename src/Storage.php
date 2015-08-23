@@ -4,9 +4,9 @@ namespace Ornament;
 
 trait Storage
 {
-    protected function addAdapter(Adapter $adapter)
+    protected function addAdapter(Adapter $adapter, $id = null)
     {
-        Repository::registerAdapter($this, $adapter);
+        Repository::registerAdapter($this, $adapter, $id);
         return $adapter;
     }
 
