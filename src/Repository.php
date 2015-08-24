@@ -12,7 +12,7 @@ abstract class Repository
     private static $cleanModels = [];
     private static $reflected = [];
 
-    public static function registerAdapter($obj, $adapter, $id)
+    public static function registerAdapter($obj, $adapter, $id, array $fields)
     {
         self::markClean($obj);
         $key = spl_object_hash($obj);
@@ -20,7 +20,20 @@ abstract class Repository
             self::$adapters[$key] = [];
         }
         $adapter_key = spl_object_hash($adapter)."#$id";
-        self::$adapters[$key][$adapter_key] = $adapter;
+        $model = new Model($adapter);
+        $new = true;
+        foreach ($fields as $field) {
+            if (isset($obj->$field)) {
+                $new = false;
+            }
+            $model->$field =& $obj->$field;
+        }
+        if ($new) {
+            $model->markNew();
+        } else {
+            $model->markClean();
+        }
+        self::$adapters[$key][$adapter_key] = $model;
     }
 
     public static function getAdapters($obj)
