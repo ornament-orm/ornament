@@ -19,7 +19,7 @@ class Pdo implements Adapter
     public function __construct(Base $adapter, $table, array $fields)
     {
         $this->adapter = $adapter;
-        $this->setTable($table);
+        $this->table = $table;
         $this->fields = $fields;
     }
 
