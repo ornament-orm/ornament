@@ -47,7 +47,7 @@ class Pdo implements Adapter
                 break;
             }
         }
-        $retval = $this->$type($object, $pk = null);
+        $success = $this->$type($object, $pk = null);
         if ($type == 'insert' && count($this->primaryKey) == 1) {
             $pk = $this->primaryKey[0];
             try {
@@ -75,7 +75,7 @@ class Pdo implements Adapter
         $stmt->execute($values);
         $stmt->fetch();
         Repository::markClean($object);
-        return $retval;
+        return $success ? null : $this->adapter->errorInfo();
     }
 
     private function getStatement($sql)
