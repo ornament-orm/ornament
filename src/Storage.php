@@ -15,20 +15,22 @@ trait Storage
         $adapters = Repository::getAdapters($this);
         $errors = [];
         foreach ($adapters as $model) {
-            if ($error = $model->save()) {
-                $errors[] = $error;
+            if ($model->isDirty()) {
+                if ($error = $model->save()) {
+                    $errors[] = $error;
+                }
             }
         }
         foreach (Helper::export($this) as $prop => $value) {
             if (is_object($value) && Helper::isModel($value)) {
-                if (!method_exists($value, 'dirty') || $value->dirty()) {
+                if (!method_exists($value, 'isDirty') || $value->isDirty()) {
                     $value->save();
                 }
             } elseif (is_array($value)) {
                 foreach ($this->$prop as $model) {
                     if (is_object($model) && Helper::isModel($model)) {
-                        if (!method_exists($model, 'dirty')
-                            || $model->dirty()
+                        if (!method_exists($model, 'isDirty')
+                            || $model->isDirty()
                         ) {
                             $model->save();
                         }
