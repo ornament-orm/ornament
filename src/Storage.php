@@ -19,6 +19,23 @@ trait Storage
                 $errors[] = $error;
             }
         }
+        foreach (Helper::export($this) as $prop => $value) {
+            if (is_object($value) && Helper::isModel($value)) {
+                if (!method_exists($value, 'dirty') || $value->dirty()) {
+                    $value->save();
+                }
+            } elseif (is_array($value)) {
+                foreach ($this->$prop as $model) {
+                    if (is_object($model) && Helper::isModel($model)) {
+                        if (!method_exists($model, 'dirty')
+                            || $model->dirty()
+                        ) {
+                            $model->save();
+                        }
+                    }
+                }
+            }
+        }
         return $errors ? $errors : null;
     }
 
