@@ -8,10 +8,8 @@ pages:
     - 'Overview of concepts and functionalities': 'basic/overview.md'
     - 'Writing Ornament models from scratch': 'basic/scratch.md'
     - 'Adding virtual fields': 'basic/virtual.md'
-    - 'Generating ORM models': 'basic/generating.md'
 
-- 'Tutorial: writing a simple Twitter client':
-    - 'Dependencies': 'tutorial/dependencies.md'
-    - 'Tweet model': 'tutorial/tweet.md'
+- Advanced:
+    - 'Writing your own adapters': 'advanced/adapters.md'
 
 theme: mkdocs
