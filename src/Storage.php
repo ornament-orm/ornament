@@ -25,8 +25,9 @@ trait Storage
                     $value->save();
                 }
             } elseif (is_array($value)) {
-                foreach ($this->$prop as $model) {
+                foreach ($this->$prop as $index => $model) {
                     if (is_object($model) && Helper::isModel($model)) {
+                        $model->__index($index);
                         if (!method_exists($model, 'dirty')
                             || $model->dirty()
                         ) {
@@ -100,6 +101,13 @@ trait Storage
             }
         }
         return false;
+    }
+
+    /**
+     * You'll want to specify a custom implementation for this.
+     */
+    public function __index($index)
+    {
     }
 }
 
