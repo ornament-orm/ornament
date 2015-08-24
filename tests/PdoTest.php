@@ -10,7 +10,7 @@ class MyTableModel
 
     public function __construct(PDO $pdo)
     {
-        $this->addAdapter($pdo);
+        $this->addPdoAdapter($pdo);
     }
 }
 
@@ -24,7 +24,7 @@ class LinkedTableModel
 
     public function __construct(PDO $pdo)
     {
-        $this->addAdapter($pdo);
+        $this->addPdoAdapter($pdo);
     }
 
     public function getPercentage()
@@ -46,7 +46,7 @@ class BitflagModel
 
     public function __construct(PDO $pdo)
     {
-        $this->addAdapter($pdo);
+        $this->addPdoAdapter($pdo);
         $this->addBitflag('nice', self::STATUS_NICE, 'status');
         $this->addBitflag('cats', self::STATUS_CATS, 'status');
         $this->addBitflag('code', self::STATUS_CODE, 'status');
@@ -66,17 +66,13 @@ class PdoTest extends PHPUnit_Extensions_Database_TestCase
         $model = new MyTableModel(self::$pdo);
         $model->name = 'Marijn';
         $model->comment = 'Hi Ornament';
-        $this->assertTrue($model->dirty());
         $model->save();
-        $this->assertFalse($model->dirty());
         $stmt = self::$pdo->prepare("SELECT * FROM my_table");
         $stmt->execute();
         $rows = $stmt->fetchAll();
         $this->assertEquals(1, count($rows));
         $model->comment = 'Awesome';
-        $this->assertTrue($model->dirty());
         $model->save();
-        $this->assertFalse($model->dirty());
         $stmt->execute();
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         $this->assertEquals('Awesome', $row['comment']);
@@ -91,6 +87,7 @@ class PdoTest extends PHPUnit_Extensions_Database_TestCase
         $model->name = 'Marijn';
         $model->comment = 'Hi Ornament';
         $model->save();
+        var_dump($model->id);
         $linked = new LinkedTableModel(self::$pdo);
         $linked->mytable = $model->id;
         $linked->points = 4;
