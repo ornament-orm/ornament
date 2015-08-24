@@ -14,7 +14,6 @@ class Model
 
     public function save()
     {
-        var_dump($this->isNew());
         if ($this->isNew()) {
             return $this->adapter->create($this);
         } else {
@@ -47,7 +46,6 @@ class Model
 
     public function isDirty()
     {
-        var_dump($this->lastCheck, $this->export());
         return $this->lastCheck != $this->export();
     }
 
