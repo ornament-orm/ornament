@@ -9,12 +9,10 @@ use ReflectionProperty;
 abstract class Repository
 {
     private static $adapters = [];
-    private static $cleanModels = [];
     private static $reflected = [];
 
     public static function registerAdapter($obj, $adapter, $id, array $fields)
     {
-        self::markClean($obj);
         $key = spl_object_hash($obj);
         if (!isset(self::$adapters[$key])) {
             self::$adapters[$key] = [];
@@ -43,19 +41,6 @@ abstract class Repository
             throw new NoAdaptersRegisteredException($obj);
         }
         return self::$adapters[$key];
-    }
-
-    public static function markClean($obj)
-    {
-        $key = spl_object_hash($obj);
-        self::$cleanModels[$key] = self::getModelValues($obj);
-    }
-
-    public static function isDirty($obj)
-    {
-        $key = spl_object_hash($obj);
-        return !isset(self::$cleanModels[$key])
-            || self::$cleanModels[$key] != self::getModelValues($obj);
     }
 
     private static function getModelValues($obj)
