@@ -66,7 +66,6 @@ trait Storage
             try {
                 return $this->callback($method);
             } catch (Exception\UndefinedCallback $e) {
-                var_dump($method);
             }
         }
         throw new Exception\UnknownVirtualProperty;
@@ -82,7 +81,6 @@ trait Storage
             try {
                 return $this->callback($method, [$value]);
             } catch (Exception\UndefinedCallback $e) {
-                var_dump($method);
             }
         }
         throw new Exception\UnknownVirtualProperty;
