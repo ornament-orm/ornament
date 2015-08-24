@@ -6,34 +6,36 @@ use PDO as Base;
 
 trait Pdo
 {
-    use Storage {
-        Storage::addAdapter as addPdoAdapter;
-    }
+    use Storage;
     use Table;
 
-    public function addAdapter(Base $pdo, $id = null)
+    public function addPdoAdapter(Base $pdo, $id = null, array $fields = null)
     {
-        $adapter = new Adapter\Pdo($pdo);
         if (!isset($id)) {
             $id = $this->guessTableName();
         }
-        $adapter->setTable($id);
-        $fields = [];
-        foreach (Repository::getProperties($this) as $prop) {
-            if (property_exists($this, $prop)) {
-                $fields[] = $prop;
+        if (!isset($fields)) {
+            $fields = [];
+            foreach (Repository::getProperties($this) as $prop) {
+                if (property_exists($this, $prop)) {
+                    $fields[] = $prop;
+                }
             }
         }
+        $pk = false;
         if (in_array('id', $fields)) {
-            $adapter->setPrimaryKey('id');
+            $pk = true;
             foreach ($fields as $key => $value) {
                 if ($value == 'id') {
                     unset($fields[$key]);
                 }
             }
         }
-        call_user_func_array([$adapter, 'setFields'], $fields);
-        return $this->addPdoAdapter($adapter, $id);
+        $adapter = new Adapter\Pdo($pdo, $id, $fields);
+        if ($pk) {
+            $adapter->setPrimaryKey('id');
+        }
+        return $this->addAdapter($adapter, $id, $fields);
     }
 }
 
