@@ -88,7 +88,7 @@ trait Storage
 
     public function __isset($prop)
     {
-        $method = 'getet'.ucfirst(Helper::denormalize($prop));
+        $method = 'get'.ucfirst(Helper::denormalize($prop));
         return method_exists($this, $method);
     }
 }
