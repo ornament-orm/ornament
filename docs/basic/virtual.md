@@ -62,7 +62,7 @@ class UserModel
 
     public function __construct(PDO $pdo)
     {
-        $this->addAdapter($pdo);
+        $this->addPdoAdapter($pdo);
     }
 
     public function getNice()
@@ -109,7 +109,7 @@ class UserModel
 
     public function __construct(PDO $pdo)
     {
-        $this->addAdapter($pdo);
+        $this->addPdoAdapter($pdo);
         $this->addBitflag('nice', self::STATUS_NICE, 'status');
         $this->addBitflag('cats', self::STATUS_CATS, 'status');
         $this->addBitflag('code', self::STATUS_CODE, 'status');
@@ -139,10 +139,9 @@ class ItemModel
 
     public function __construct(PDO $pdo)
     {
-        $this->addAdapter($pdo)
-             // We manually specify $fields here, since the $images array
-             // comes from elsewhere.
-             ->setFields('thumbnail');
+         // We manually specify $fields here, since the $images array
+         // comes from elsewhere.
+        $this->addPdoAdapter($pdo, null, ['thumbnail']);
         $stmt = $pdo->prepare("SELECT * FROM image WHERE item = ?");
         $stmt->execute([$this->id]);
         $this->images = $stmt->fetchAll(PDO::FETCH_CLASS, 'ImageModel');
@@ -163,7 +162,7 @@ class ImageModel
 
     public function __construct(PDO $pdo)
     {
-        $this->addAdapter($pdo);
+        $this->addPdoAdapter($pdo);
     }
 }
 
@@ -218,7 +217,7 @@ class ImageModel
 
     public function __construct(PDO $pdo)
     {
-        $this->addAdapter($pdo);
+        $this->addPdoAdapter($pdo);
     }
 
     public function __index($index)
