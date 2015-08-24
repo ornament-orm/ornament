@@ -89,7 +89,17 @@ trait Storage
     public function __isset($prop)
     {
         $method = 'get'.ucfirst(Helper::denormalize($prop));
-        return method_exists($this, $method);
+        if (method_exists($this, $method)) {
+            return true;
+        }
+        if (method_exists($this, 'callback')) {
+            try {
+                $this->callback($method, [$value]);
+                return true;
+            } catch (Exception\UndefinedCallback $e) {
+            }
+        }
+        return false;
     }
 }
 
