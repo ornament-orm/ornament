@@ -31,6 +31,10 @@ class LinkedTableModel
     {
         return round(($this->points / 5) * 100);
     }
+
+    public function __index($index)
+    {
+    }
 }
 
 class BitflagModel
