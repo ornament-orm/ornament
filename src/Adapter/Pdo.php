@@ -4,8 +4,10 @@ namespace Ornament\Adapter;
 
 use Ornament\Adapter;
 use Ornament\Repository;
+use Ornament\Model;
 use PDO as Base;
 use PDOException;
+use InvalidArgumentException;
 
 class Pdo implements Adapter
 {
@@ -15,21 +17,14 @@ class Pdo implements Adapter
     private $primaryKey;
     private $statements = [];
 
-    public function __construct(Base $adapter)
+    public function __construct(Base $adapter, $table, array $fields)
     {
+        if (!($adapter instanceof Base)) {
+            throw new InvalidArgumentException;
+        }
         $this->adapter = $adapter;
-    }
-
-    public function setTable($table)
-    {
         $this->table = $table;
-        return $this;
-    }
-
-    public function setFields($field)
-    {
-        $this->fields = func_get_args();
-        return $this;
+        $this->fields = $fields;
     }
 
     public function setPrimaryKey($field)
@@ -38,24 +33,8 @@ class Pdo implements Adapter
         return $this;
     }
 
-    public function store($object)
+    private function reload(Model $object)
     {
-        $type = 'update';
-        foreach ($this->primaryKey as $key) {
-            if (!isset($object->$key)) {
-                $type = 'insert';
-                break;
-            }
-        }
-        $success = $this->$type($object, $pk = null);
-        if ($type == 'insert' && count($this->primaryKey) == 1) {
-            $pk = $this->primaryKey[0];
-            try {
-                $object->$pk = $this->adapter->lastInsertId($pk);
-            } catch (PDOException $e) {
-                // Means this is not supported by this engine.
-            }
-        }
         $pks = [];
         foreach ($this->primaryKey as $key) {
             if (isset($object->$key)) {
@@ -74,8 +53,7 @@ class Pdo implements Adapter
         $stmt->setFetchMode(Base::FETCH_INTO, $object);
         $stmt->execute($values);
         $stmt->fetch();
-        Repository::markClean($object);
-        return $success ? null : $this->adapter->errorInfo();
+        $object->markClean();
     }
 
     private function getStatement($sql)
@@ -86,7 +64,7 @@ class Pdo implements Adapter
         return $this->statements[$sql];
     }
 
-    private function insert($object, $pk = null)
+    public function create(Model $object)
     {
         $sql = "INSERT INTO %1\$s (%2\$s) VALUES (%3\$s)";
         $placeholders = [];
@@ -104,10 +82,20 @@ class Pdo implements Adapter
             implode(', ', $placeholders)
         );
         $stmt = $this->getStatement($sql);
-        return $stmt->execute($values);
+        $retval = $stmt->execute($values);
+        if (count($this->primaryKey) == 1) {
+            $pk = $this->primaryKey[0];
+            try {
+                $object->$pk = $this->adapter->lastInsertId($this->table);
+                $this->reload($object);
+            } catch (PDOException $e) {
+                // Means this is not supported by this engine.
+            }
+        }
+        return $retval;
     }
 
-    private function update($object)
+    public function update(Model $object)
     {
         $sql = "UPDATE %1\$s SET %2\$s WHERE %3\$s";
         $placeholders = [];
@@ -128,7 +116,27 @@ class Pdo implements Adapter
             implode(' AND ', $primaries)
         );
         $stmt = $this->getStatement($sql);
-        return $stmt->execute($values);
+        $retval = $stmt->execute($values);
+        $this->reload($object);
+        return $retval;
+    }
+
+    public function delete(Model $object)
+    {
+        $sql = "DELETE FROM %1\$s WHERE %2\$s";
+        $primaries = [];
+        foreach ($this->primaryKey as $key) {
+            $primaries[] = sprintf('%s = ?', $key);
+            $values[] = $object->$key;
+        }
+        $sql = sprintf(
+            $sql,
+            $this->table,
+            implode(' AND ', $primaries)
+        );
+        $stmt = $this->getStatement($sql);
+        $retval = $stmt->execute($values);
+        return $retval;
     }
 }
 

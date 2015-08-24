@@ -18,10 +18,8 @@ class MyModel
 
     public function __construct(PDO $pdo)
     {
-        $this->addAdapter($pdo)
-             ->setTable('mytable')
-             ->setPrimaryKey('id')
-             ->setFields('name', 'comment');
+        $this->addPdoAdapter($pdo, 'mytable', ['name', 'comment'])
+             ->setPrimaryKey('id');
     }
 }
 
@@ -35,11 +33,11 @@ $model->save();
 That's really all you need to get started. But let's look a bit deeper into
 that, because this all still looks like magic.
 
-In the model constructor, we call `addAdapter` with our `PDO` object as an
-argument. On the return value of that (a wrapped `Ornament\Adapter` object) we
-then tell Ornament how to handle this type of object; we call `setTable`,
-`setPrimaryKey` and `setFields` (I assume it's quite obvious what these do).
-The order in which you call these is unimportant; they all return `$this`.
+In the model constructor, we call `addPdoAdapter` with our `PDO` object as the
+first argument, the table as second and finally an array of fields. On the
+return value of that (a wrapped `Ornament\Adapter` object) we then tell
+Ornament how to handle this type of object; we call `setPrimaryKey` to tell the
+PDO adapter what the primary key field is.
 
 > In this example, the `PDO` object is injected via the constructor, but of
 > course you can get it from wherever you like.
@@ -77,7 +75,7 @@ $model->delete();
 
 ## Good programmers are lazy
 Well, at least _I_ am. Ornament `Pdo` models do make a number of assumptions
-based on the model you call `addAdapter` on:
+based on the model you call `addPdoAdapter` on:
 
 - The `fields` are the public members;
 - If there is a field named `id`, it's probably a primary key;
@@ -111,16 +109,24 @@ class MyModel
             ));
             return trim($table, '_');
         });
-        $this->addAdapter($pdo);
+        $this->addPdoAdapter($pdo);
     }
 }
 ```
 
 We now have slightly more code, but since this is a common scenario you could
 (should) abstract it away, maybe to a base class. Actually, the above example is
-Ornament's default implementation so we could have left it out alltogether.
+Ornament's PDO adapter's default implementation so we could have left it out all
+together.
 
 > Yes, we specifically said Ornament didn't make these assumptions unlike e.g.
 > Eloquent, but if your database is well designed they'll come in handy for
 > simpler models. And you can always override using the above logic.
+
+The second argument we said was the "table" is actually rather an "id" for
+Ornament to differentiate by when multiple adapters are registered. You'll
+learn more about this later.
+
+For non-PDO Adapters (more about those later as well) one should also assume
+all public properties are "the fields" in the model.
 

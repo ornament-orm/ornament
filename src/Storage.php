@@ -4,9 +4,9 @@ namespace Ornament;
 
 trait Storage
 {
-    protected function addAdapter(Adapter $adapter, $id = null)
+    protected function addAdapter(Adapter $adapter, $id, array $fields)
     {
-        Repository::registerAdapter($this, $adapter, $id);
+        Repository::registerAdapter($this, $adapter, $id, $fields);
         return $adapter;
     }
 
@@ -14,22 +14,24 @@ trait Storage
     {
         $adapters = Repository::getAdapters($this);
         $errors = [];
-        foreach ($adapters as $adapter) {
-            if ($error = $adapter->store($this)) {
-                $errors[] = $error;
+        foreach ($adapters as $model) {
+            if ($model->isDirty()) {
+                if ($error = $model->save()) {
+                    $errors[] = $error;
+                }
             }
         }
         foreach (Helper::export($this) as $prop => $value) {
             if (is_object($value) && Helper::isModel($value)) {
-                if (!method_exists($value, 'dirty') || $value->dirty()) {
+                if (!method_exists($value, 'isDirty') || $value->isDirty()) {
                     $value->save();
                 }
             } elseif (is_array($value)) {
                 foreach ($this->$prop as $index => $model) {
                     if (is_object($model) && Helper::isModel($model)) {
                         $model->__index($index);
-                        if (!method_exists($model, 'dirty')
-                            || $model->dirty()
+                        if (!method_exists($model, 'isDirty')
+                            || $model->isDirty()
                         ) {
                             $model->save();
                         }
@@ -50,11 +52,6 @@ trait Storage
             }
         }
         return $errors ? $errors : null;
-    }
-
-    public function dirty()
-    {
-        return Repository::isDirty($this);
     }
 
     public function __get($prop)

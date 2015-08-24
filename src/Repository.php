@@ -9,18 +9,29 @@ use ReflectionProperty;
 abstract class Repository
 {
     private static $adapters = [];
-    private static $cleanModels = [];
     private static $reflected = [];
 
-    public static function registerAdapter($obj, $adapter, $id)
+    public static function registerAdapter($obj, $adapter, $id, array $fields)
     {
-        self::markClean($obj);
         $key = spl_object_hash($obj);
         if (!isset(self::$adapters[$key])) {
             self::$adapters[$key] = [];
         }
         $adapter_key = spl_object_hash($adapter)."#$id";
-        self::$adapters[$key][$adapter_key] = $adapter;
+        $model = new Model($adapter);
+        $new = true;
+        foreach ($fields as $field) {
+            if (isset($obj->$field)) {
+                $new = false;
+            }
+            $model->$field =& $obj->$field;
+        }
+        if ($new) {
+            $model->markNew();
+        } else {
+            $model->markClean();
+        }
+        self::$adapters[$key][$adapter_key] = $model;
     }
 
     public static function getAdapters($obj)
@@ -30,19 +41,6 @@ abstract class Repository
             throw new NoAdaptersRegisteredException($obj);
         }
         return self::$adapters[$key];
-    }
-
-    public static function markClean($obj)
-    {
-        $key = spl_object_hash($obj);
-        self::$cleanModels[$key] = self::getModelValues($obj);
-    }
-
-    public static function isDirty($obj)
-    {
-        $key = spl_object_hash($obj);
-        return !isset(self::$cleanModels[$key])
-            || self::$cleanModels[$key] != self::getModelValues($obj);
     }
 
     private static function getModelValues($obj)
