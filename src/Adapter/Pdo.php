@@ -40,6 +40,9 @@ class Pdo implements Adapter
 
     public function store($object)
     {
+        if (!$object->dirty()) {
+            return null;
+        }
         $type = 'update';
         foreach ($this->primaryKey as $key) {
             if (!isset($object->$key)) {
