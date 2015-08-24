@@ -87,7 +87,6 @@ class PdoTest extends PHPUnit_Extensions_Database_TestCase
         $model->name = 'Marijn';
         $model->comment = 'Hi Ornament';
         $model->save();
-        var_dump($model->id);
         $linked = new LinkedTableModel(self::$pdo);
         $linked->mytable = $model->id;
         $linked->points = 4;
