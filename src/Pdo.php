@@ -25,11 +25,6 @@ trait Pdo
         $pk = false;
         if (in_array('id', $fields)) {
             $pk = true;
-            foreach ($fields as $key => $value) {
-                if ($value == 'id') {
-                    unset($fields[$key]);
-                }
-            }
         }
         $adapter = new Adapter\Pdo($pdo, $id, $fields);
         if ($pk) {
