@@ -87,5 +87,11 @@ trait Storage
         }
         throw new Exception\UnknownVirtualProperty;
     }
+
+    public function __isset($prop)
+    {
+        $method = 'getet'.ucfirst(Helper::denormalize($prop));
+        return method_exists($this, $method);
+    }
 }
 
