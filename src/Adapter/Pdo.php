@@ -7,6 +7,7 @@ use Ornament\Repository;
 use Ornament\Model;
 use PDO as Base;
 use PDOException;
+use InvalidArgumentException;
 
 class Pdo implements Adapter
 {
@@ -18,6 +19,9 @@ class Pdo implements Adapter
 
     public function __construct(Base $adapter, $table, array $fields)
     {
+        if (!($adapter instanceof Base)) {
+            throw new InvalidArgumentException;
+        }
         $this->adapter = $adapter;
         $this->table = $table;
         $this->fields = $fields;
@@ -62,9 +66,6 @@ class Pdo implements Adapter
 
     public function create(Model $object)
     {
-        if (!$object->isDirty()) {
-            return null;
-        }
         $sql = "INSERT INTO %1\$s (%2\$s) VALUES (%3\$s)";
         $placeholders = [];
         $values = [];
@@ -96,9 +97,6 @@ class Pdo implements Adapter
 
     public function update(Model $object)
     {
-        if (!$object->isDirty()) {
-            return null;
-        }
         $sql = "UPDATE %1\$s SET %2\$s WHERE %3\$s";
         $placeholders = [];
         $values = [];
