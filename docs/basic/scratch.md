@@ -18,8 +18,7 @@ class MyModel
 
     public function __construct(PDO $pdo)
     {
-        $this->addAdapter($pdo)
-             ->setTable('mytable')
+        $this->addAdapter($pdo, 'mytable')
              ->setPrimaryKey('id')
              ->setFields('name', 'comment');
     }
