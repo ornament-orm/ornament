@@ -23,18 +23,6 @@ class Pdo implements Adapter
         $this->fields = $fields;
     }
 
-    public function setTable($table)
-    {
-        $this->table = $table;
-        return $this;
-    }
-
-    public function setFields($field)
-    {
-        $this->fields = func_get_args();
-        return $this;
-    }
-
     public function setPrimaryKey($field)
     {
         $this->primaryKey = func_get_args();
