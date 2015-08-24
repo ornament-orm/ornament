@@ -4,9 +4,9 @@ namespace Ornament;
 
 trait Storage
 {
-    protected function addAdapter(Adapter $adapter, $id = null)
+    protected function addAdapter(Adapter $adapter, $id, array $fields)
     {
-        Repository::registerAdapter($this, $adapter, $id);
+        Repository::registerAdapter($this, $adapter, $id, $fields);
         return $adapter;
     }
 
@@ -14,8 +14,8 @@ trait Storage
     {
         $adapters = Repository::getAdapters($this);
         $errors = [];
-        foreach ($adapters as $adapter) {
-            if ($error = $adapter->store($this)) {
+        foreach ($adapters as $model) {
+            if ($error = $model->save()) {
                 $errors[] = $error;
             }
         }
@@ -49,11 +49,6 @@ trait Storage
             }
         }
         return $errors ? $errors : null;
-    }
-
-    public function dirty()
-    {
-        return Repository::isDirty($this);
     }
 
     public function __get($prop)
