@@ -48,5 +48,18 @@ abstract class Helper
             $input
         );
     }
+
+    /**
+     * Exports the object as an array of public key/value pairs. Basically a
+     * simple wrapper for `get_object_vars` but usefull when calling from a
+     * `$this` context.
+     *
+     * @param object The object to export.
+     * @return array An array of public properties with their values.
+     */
+    public static function export($object)
+    {
+        return get_object_vars($object);
+    }
 }
 
