@@ -58,6 +58,9 @@ class PdoTest extends PHPUnit_Extensions_Database_TestCase
     private static $pdo;
     private $conn;
 
+    /**
+     * @covers Ornament\Storage::dirty
+     */
     public function testModel()
     {
         $model = new MyTableModel(self::$pdo);

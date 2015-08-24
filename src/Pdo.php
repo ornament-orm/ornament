@@ -18,7 +18,12 @@ trait Pdo
             $id = $this->guessTableName();
         }
         $adapter->setTable($id);
-        $fields = Repository::getProperties($this);
+        $fields = [];
+        foreach (Repository::getProperties($this) as $prop) {
+            if (property_exists($this, $prop)) {
+                $fields[] = $prop;
+            }
+        }
         if (in_array('id', $fields)) {
             $adapter->setPrimaryKey('id');
             foreach ($fields as $key => $value) {

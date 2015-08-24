@@ -48,5 +48,35 @@ abstract class Helper
             $input
         );
     }
+
+    /**
+     * Exports the object as an array of public key/value pairs. Basically a
+     * simple wrapper for `get_object_vars` but usefull when calling from a
+     * `$this` context.
+     *
+     * @param object The object to export.
+     * @return array An array of public properties with their values.
+     */
+    public static function export($object)
+    {
+        return get_object_vars($object);
+    }
+
+    /**
+     * Returns true if the input is an Ornament-compatible model, false
+     * otherwise.
+     *
+     * This function _also_ returns true if the object has a `save` method. It's
+     * then assumed that its implementation is compatible with Ornament's.
+     *
+     * todo: Add aliases for other ORMs so the user can mix and match.
+     *
+     * @param Object $object The object to check.
+     * @return boolean true if Ornament-compatible, false otherwise.
+     */
+    public static function isModel(object $object)
+    {
+        return method_exists($object, 'save');
+    }
 }
 
