@@ -97,7 +97,7 @@ class Pdo implements Adapter
         if (count($this->primaryKey) == 1) {
             $pk = $this->primaryKey[0];
             try {
-                $object->$pk = $this->adapter->lastInsertId($pk);
+                $object->$pk = $this->adapter->lastInsertId($this->table);
                 $this->reload($object);
             } catch (PDOException $e) {
                 // Means this is not supported by this engine.
