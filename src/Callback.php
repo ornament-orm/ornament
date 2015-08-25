@@ -14,6 +14,10 @@ trait Callback
         if (!isset($callbacks[$fn])) {
             throw new Exception\UndefinedCallback;
         }
+        if (!isset($args)) {
+            // Just checking...
+            return true;
+        }
         return call_user_func_array($callbacks[$fn], $args);
     }
 
