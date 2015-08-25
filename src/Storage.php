@@ -156,7 +156,6 @@ trait Storage
             } catch (Exception\UndefinedCallback $e) {
             }
         }
-        var_dump($prop);
         throw new Exception\UnknownVirtualProperty;
     }
 
