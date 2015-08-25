@@ -9,7 +9,7 @@ use PDO as Base;
 use PDOException;
 use InvalidArgumentException;
 
-class Pdo implements Adapter
+final class Pdo implements Adapter
 {
     private $adapter;
     private $table;
