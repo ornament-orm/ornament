@@ -81,7 +81,7 @@ class Pdo implements Adapter
         $object->markClean();
     }
 
-    private function getStatement($sql)
+    protected function getStatement($sql)
     {
         if (!isset($this->statements[$sql])) {
             $this->statements[$sql] = $this->adapter->prepare($sql);
