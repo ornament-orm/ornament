@@ -158,7 +158,7 @@ trait Storage
             } catch (Exception\UndefinedCallback $e) {
             }
         }
-        throw new Exception\UnknownVirtualProperty;
+        throw new Exception\UnknownVirtualProperty($prop, $this);
     }
 
     public function __isset($prop)
