@@ -1,12 +1,8 @@
 <?php
 
-use Disclosure\Container;
-use Disclosure\Injector;
-
 class MyTableModel
 {
     use Ornament\Pdo;
-    use Injector;
 
     private $pdo;
 
@@ -16,7 +12,7 @@ class MyTableModel
 
     public function __construct()
     {
-        $this->inject(function ($pdo) {});
+        $this->pdo = $GLOBALS['pdo'];
         $this->addPdoAdapter($this->pdo);
     }
 }
@@ -25,7 +21,6 @@ class LinkedTableModel
 {
     use Ornament\Pdo;
     use Ornament\Autoload;
-    use Injector;
 
     private $pdo;
 
@@ -39,7 +34,7 @@ class LinkedTableModel
 
     public function __construct()
     {
-        $this->inject(function ($pdo) {});
+        $this->pdo = $GLOBALS['pdo'];
         $this->addPdoAdapter($this->pdo);
     }
 
@@ -57,7 +52,6 @@ class BitflagModel
 {
     use Ornament\Pdo;
     use Ornament\Bitflag;
-    use Injector;
 
     const STATUS_NICE = 1;
     const STATUS_CATS = 2;
@@ -69,7 +63,7 @@ class BitflagModel
 
     public function __construct()
     {
-        $this->inject(function ($pdo) {});
+        $this->pdo = $GLOBALS['pdo'];
         $this->addPdoAdapter($this->pdo);
         $this->addBitflag('nice', self::STATUS_NICE, 'status');
         $this->addBitflag('cats', self::STATUS_CATS, 'status');
@@ -165,9 +159,7 @@ class PdoTest extends PHPUnit_Extensions_Database_TestCase
             if (!isset(self::$pdo)) {
                 self::$pdo = new PDO('sqlite::memory:');
                 self::$pdo->exec(file_get_contents(__DIR__.'/schema.sql'));
-                Container::inject('*', function (&$pdo) {
-                    $pdo = self::$pdo;
-                });
+                $GLOBALS['pdo'] = self::$pdo;
             }
             $this->conn = $this->createDefaultDBConnection(self::$pdo, 'test');
         }

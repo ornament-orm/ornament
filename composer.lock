@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "70872292b305bbcc0f794d00cd159a44",
+    "hash": "ea350d9fd9ca01f75490212f6cd09c36",
     "packages": [
         {
             "name": "zeptech/annotations",
@@ -101,50 +101,6 @@
                 "instantiate"
             ],
             "time": "2015-06-14 21:17:01"
-        },
-        {
-            "name": "monomelodies/disclosure",
-            "version": "1.0.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/monomelodies/disclosure.git",
-                "reference": "1e1cbf319b0d7574c083d7e634e2ffd9e88d15da"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/monomelodies/disclosure/zipball/1e1cbf319b0d7574c083d7e634e2ffd9e88d15da",
-                "reference": "1e1cbf319b0d7574c083d7e634e2ffd9e88d15da",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=5.4"
-            },
-            "require-dev": {
-                "phpunit/phpunit": ">=4.0"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "Disclosure\\": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Marijn Ophorst",
-                    "email": "marijn@monomelodies.nl"
-                }
-            ],
-            "description": "PHP5 dependency injection framework",
-            "keywords": [
-                "dependency",
-                "injection",
-                "php"
-            ],
-            "time": "2015-06-04 13:45:37"
         },
         {
             "name": "phpdocumentor/reflection-docblock",
