@@ -37,13 +37,15 @@ trait Storage
         return $annotations;
     }
 
-    public function load()
+    public function load($includeBase = true)
     {
         $annotations = $this->annotations();
-        $adapters = Repository::getAdapters($this);
-        $errors = [];
-        foreach ($adapters as $model) {
-            $model->load();
+        if ($includeBase) {
+            $adapters = Repository::getAdapters($this);
+            $errors = [];
+            foreach ($adapters as $model) {
+                $model->load();
+            }
         }
         foreach ($annotations['methods'] as $method => $anns) {
             if (isset($anns['onLoad']) && $anns['onLoad']) {
