@@ -33,7 +33,12 @@ class Pdo implements Adapter
         return $this;
     }
 
-    public function query($object, array $parameters, array $ctor = [])
+    public function query(
+        $object,
+        array $parameters,
+        array $opts = [],
+        array $ctor = []
+    )
     {
         $keys = [];
         $values = [];
@@ -43,14 +48,27 @@ class Pdo implements Adapter
         }
         if ($keys) {
             $sql = "SELECT * FROM %1\$s WHERE %2\$s";
-            $stmt = $this->getStatement(sprintf(
+            $sql = sprintf(
                 $sql,
                 $this->table,
                 implode(' AND ', $keys)
-            ));
+            );
         } else {
-            $stmt = $this->getStatement("SELECT * FROM {$this->table}");
+            $sql = "SELECT * FROM {$this->table}";
         }
+        if (isset($opts['order'])) {
+            $sql .= sprintf(
+                ' ORDER BY %s',
+                preg_replace('@[^\w,\s\(\)]', '', $opts['order'])
+            );
+        }
+        if (isset($opts['limit'])) {
+            $sql .= sprintf(' LIMIT %d', $opts['limit']);
+        }
+        if (isset($opts['offset'])) {
+            $sql .= sprintf(' OFFSET %d', $opts['offset']);
+        }
+        $stmt = $this->getStatement($sql);
         $stmt->setFetchMode(Base::FETCH_INTO, $object);
         $stmt->execute($values);
         $class = get_class($object);
