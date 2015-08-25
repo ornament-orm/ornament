@@ -4,5 +4,20 @@
         <column>id</column>
         <column>name</column>
         <column>comment</column>
+        <row>
+            <value>1</value>
+            <value>John</value>
+            <value>A Beatle</value>
+        </row>
+        <row>
+            <value>2</value>
+            <value>Keith</value>
+            <value>A Rolling Stone</value>
+        </row>
+        <row>
+            <value>3</value>
+            <value>Roger</value>
+            <value>A Byrd</value>
+        </row>
     </table>
 </dataset>
