@@ -33,9 +33,34 @@ class Pdo implements Adapter
         return $this;
     }
 
-    private function reload(Model $object)
+    public function query($object, array $parameters, array $ctor = [])
+    {
+        $keys = [];
+        $values = [];
+        foreach ($parameters as $key => $value) {
+            $keys[$key] = sprintf('%s = ?', $key);
+            $values[] = $value;
+        }
+        if ($keys) {
+            $sql = "SELECT * FROM %1\$s WHERE %2\$s";
+            $stmt = $this->getStatement(sprintf(
+                $sql,
+                $this->table,
+                implode(' AND ', $keys)
+            ));
+        } else {
+            $stmt = $this->getStatement("SELECT * FROM {$this->table}");
+        }
+        $stmt->setFetchMode(Base::FETCH_INTO, $object);
+        $stmt->execute($values);
+        $class = get_class($object);
+        return $stmt->fetchAll(Base::FETCH_CLASS, $class, $ctor);
+    }
+
+    public function load(Model $object)
     {
         $pks = [];
+        $values = [];
         foreach ($this->primaryKey as $key) {
             if (isset($object->$key)) {
                 $pks[$key] = sprintf('%s = ?', $key);
@@ -87,7 +112,7 @@ class Pdo implements Adapter
             $pk = $this->primaryKey[0];
             try {
                 $object->$pk = $this->adapter->lastInsertId($this->table);
-                $this->reload($object);
+                $this->load($object);
             } catch (PDOException $e) {
                 // Means this is not supported by this engine.
             }
@@ -117,7 +142,7 @@ class Pdo implements Adapter
         );
         $stmt = $this->getStatement($sql);
         $retval = $stmt->execute($values);
-        $this->reload($object);
+        $this->load($object);
         return $retval;
     }
 
