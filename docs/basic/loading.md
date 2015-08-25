@@ -109,3 +109,29 @@ class UserModel
 > care when autoloading many relationships; the number of queries done can
 > quickly grow out of control.
 
+## Manual loading
+Of course, you don't _need_ to use this; in fact, optimized queries are often
+too complicated to wrap in such an abstraction (the above is just quick and
+dirty for simpler models).
+
+Simply write your own `load` and `query` implementations. `load` should update
+the current model with data as read from source, whilst `query` should return
+an array populated with instances of `__CLASS__` according to the specified
+parameters/options.
+
+The function signature for `query` is:
+
+```php
+public function query(array $parameters, array $opts = [], array $ctor = []);
+```
+
+`$opts` is a hash of adapter-specific options. For instance, the default Pdo
+adapter supports `limit(int)`, `offset(int)` and `order(string)`.
+
+`$ctor` is an optional array of constructor arguments your implementation should
+use when instantiating the new models in the list.
+
+In the function body, simply do whatever you need to do to get your data, and
+then loop through it creating a new instance of `__CLASS__` with the correct
+properties set.
+
