@@ -8,6 +8,7 @@ pages:
     - 'Overview of concepts and functionalities': 'basic/overview.md'
     - 'Writing Ornament models from scratch': 'basic/scratch.md'
     - 'Adding virtual fields': 'basic/virtual.md'
+    - 'Getting data into your models': 'basic/loading.md'
 
 - Advanced:
     - 'Writing your own adapters': 'advanced/adapters.md'
