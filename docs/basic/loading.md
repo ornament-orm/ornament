@@ -83,7 +83,8 @@ argument-less constructors.
 
 ## Auto-loading one-to-many relationships
 The reverse can also happen: for each `UserModel`, you want all `ItemModel`s
-she "owns". This is similar; you only need to pluralize the annotation:
+she "owns". This is similar; you only need to set the field's default value to
+an empty array:
 
 ```php
 <?php
@@ -94,7 +95,7 @@ class UserModel
     use Ornament\Autoload;
 
     /**
-     * @Models ItemModel
+     * @Model ItemModel
      * @Mapping owner = id
      * @Constructor [ pdo ]
      */
