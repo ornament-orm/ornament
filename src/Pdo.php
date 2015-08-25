@@ -14,10 +14,13 @@ trait Pdo
         if (!isset($id)) {
             $id = $this->guessTableName();
         }
+        $annotations = $this->annotations()['properties'];
         if (!isset($fields)) {
             $fields = [];
             foreach (Repository::getProperties($this) as $prop) {
-                if (property_exists($this, $prop)) {
+                if (property_exists($this, $prop)
+                    && !isset($annotations[$prop]['Virtual'])
+                ) {
                     $fields[] = $prop;
                 }
             }
