@@ -29,19 +29,19 @@ trait Autoload
                     }
                 }
                 $ref = new ReflectionClass($class);
-                if (!is_array($this->$mapto)) {
+                if (!is_array($this->$property)) {
                     $model = $ref->newInstanceArgs($ctorargs);
                     foreach ($maps as $field => $mapto) {
                         $model->$field = $this->$mapto;
                     }
                     $model->load();
-                    $this->$mapto = $model;
+                    $this->$property = $model;
                 } else {
                     $args = [];
                     foreach ($maps as $key => $arg) {
                         $args[$key] = $this->$arg;
                     }
-                    $this->$mapto = $model->query($args);
+                    $this->$property = $model->query($args);
                 }
             }
         }
