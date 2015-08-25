@@ -53,8 +53,12 @@ the generic `addAdapter` method defined by the `Storage` trait:
 ```php
 <?php
 
+use Ornament\Storage;
+
 class MyCustomModel
 {
+    use Storage;
+
     public function __construct()
     {
         $this->addMyadapterAdapter('/some/endpoint/', ['some', 'fields']);
