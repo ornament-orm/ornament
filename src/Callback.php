@@ -4,7 +4,7 @@ namespace Ornament;
 
 trait Callback
 {
-    private function callback($fn, $args)
+    private function callback($fn, $args = null)
     {
         static $callbacks = [];
         if (is_callable($args)) {
