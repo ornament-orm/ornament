@@ -53,5 +53,30 @@ class Collection extends ArrayObject
         }
         return $errors ? $errors : null;
     }
+
+    /**
+     * Check if the collection is "dirty", i.e. its contents have changed since
+     * the last save.
+     *
+     * @return boolean true if dirty, otherwise false.
+     */
+    public function dirty()
+    {
+        return $this->getArrayCopy() != array_values($this->original);
+    }
+
+    /**
+     * Mark the collection as "clean", i.e. in pristine state.
+     *
+     * @return void
+     */
+    public function markClean()
+    {
+        $this->storage = [];
+        foreach ($this->getArrayCopy() as $model) {
+            $key = spl_object_hash($model);
+            $this->storage[$key] = $model;
+        }
+    }
 }
 
