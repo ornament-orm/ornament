@@ -111,7 +111,7 @@ trait Storage
         $adapters = Repository::getAdapters($this);
         $errors = [];
         foreach ($adapters as $model) {
-            return $model->query($this, $parameters);
+            return new Collection($model->query($this, $parameters));
         }
     }
 
@@ -159,8 +159,10 @@ trait Storage
                     }
                 }
             } elseif (is_object($value) && $value instanceof Collection) {
-                if ($errs = $value->save()) {
-                    $errors = array_merge($errors, $errs);
+                if ($value->dirty()) {
+                    if ($errs = $value->save()) {
+                        $errors = array_merge($errors, $errs);
+                    }
                 }
             } elseif (is_array($value)) {
                 foreach ($this->$prop as $index => $model) {
