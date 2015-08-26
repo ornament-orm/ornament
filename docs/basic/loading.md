@@ -30,7 +30,28 @@ $model->id = 1;
 $model->load();
 ```
 
-## Loading an array of models
+## Loading a single model
+To load a single model, use the `find` method:
+
+```php
+<?php
+
+$model = (new SimpleModel($pdo))->find(['foo' => 'bar']);
+```
+
+`find` is passed a hash of key/value properties to match.
+
+This is functionally equivalent to setting properties and calling `load` on the
+model to load it in-place. Some adapter may however choose to provide more
+flexibility, e.g. via the optional second `$options` argument.
+
+> We agree that conceptually it would be cleaner to use a _different_ class for
+> retrieving models, cfg. Doctrine's Repositories. However, this would also mean
+> duplicating all kinds of logic and that's a bad tradeoff. Usually, just
+> instantiating an "anonymous" object that's immediately discarded works well
+> enough anyway - only the syntax is a little weird.
+
+## Loading an array of models (a Collection)
 The Ornament models also provide a simple `query` method which returns an array of
 models matching the supplied key/value pair of properties:
 
