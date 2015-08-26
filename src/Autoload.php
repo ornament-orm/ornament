@@ -29,8 +29,8 @@ trait Autoload
                     }
                 }
                 $ref = new ReflectionClass($class);
+                $model = $ref->newInstanceArgs($ctorargs);
                 if (!is_array($this->$property)) {
-                    $model = $ref->newInstanceArgs($ctorargs);
                     foreach ($maps as $field => $mapto) {
                         $model->$field = $this->$mapto;
                     }
