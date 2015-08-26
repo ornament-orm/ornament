@@ -62,6 +62,9 @@ abstract class Repository
             foreach ($reflected->getProperties(
                 ReflectionProperty::IS_PUBLIC
             ) as $prop) {
+                if ($prop->isStatic()) {
+                    continue;
+                }
                 self::$reflected[$class][] = $prop->getName();
             }
             foreach ($reflected->getMethods(
