@@ -23,8 +23,7 @@ class Model
      */
     public function query($parent, array $parameters, array $ctor = [])
     {
-        $res = $this->adapter->query($parent, $parameters, $ctor);
-        return new Collection($res);
+        return $this->adapter->query($parent, $parameters, $ctor);
     }
 
     /**
