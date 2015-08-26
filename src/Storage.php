@@ -144,9 +144,7 @@ trait Storage
             } catch (Exception\UndefinedCallback $e) {
             }
         }
-        if (property_exists($this, $prop)
-            && substr($prop, 0, 2) != '__'
-        ) {
+        if (property_exists($this, $prop) && $prop{0} != '_') {
             return $this->$prop;
         }
         trigger_error(sprintf(
