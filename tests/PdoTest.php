@@ -59,6 +59,9 @@ class BitflagModel
 
     private $pdo;
 
+    /**
+     * @PrimaryKey
+     */
     public $status;
 
     public function __construct()
