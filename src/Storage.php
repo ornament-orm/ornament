@@ -59,7 +59,7 @@ trait Storage
 
     /**
      * (Re)loads the current model based on the specified adapters.
-     * Optionally also calls methods annotated with @onLoad.
+     * Optionally also calls methods annotated with `onLoad`.
      *
      * @param bool $includeBase If set to true, loads the base model; if false,
      *                          only (re)loads linked models. Defaults to true.
