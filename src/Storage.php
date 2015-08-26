@@ -102,8 +102,8 @@ trait Storage
      * @param array $parameters Key/value pair of parameters (e.g. ['id' => 1]).
      * @param array $opts Key/value pair of options.
      * @param array $ctor Optional constructor arguments.
-     * @return false|Ornament\Collection An Ornament\Collection of models of
-     *                                   type __CLASS__, or false on failure.
+     * @return Ornament\Collection An Ornament\Collection of models found (which
+     *                             might be empty of course) of type __CLASS__.
      */
     public function query(array $parameters, array $opts = [], array $ctor = [])
     {
@@ -154,7 +154,13 @@ trait Storage
         foreach (Helper::export($this) as $prop => $value) {
             if (is_object($value) && Helper::isModel($value)) {
                 if (!method_exists($value, 'isDirty') || $value->isDirty()) {
-                    $value->save();
+                    if ($error = $value->save()) {
+                        $errors[] = $error;
+                    }
+                }
+            } elseif (is_object($value) && $value instanceof Collection) {
+                if ($errs = $value->save()) {
+                    $errors = array_merge($errors, $errs);
                 }
             } elseif (is_array($value)) {
                 foreach ($this->$prop as $index => $model) {
@@ -163,7 +169,9 @@ trait Storage
                         if (!method_exists($model, 'isDirty')
                             || $model->isDirty()
                         ) {
-                            $model->save();
+                            if ($error = $model->save()) {
+                                $errors[] = $error;
+                            }
                         }
                     }
                 }
