@@ -81,6 +81,7 @@ class PdoTest extends PHPUnit_Extensions_Database_TestCase
 
     /**
      * @covers Ornament\Storage::dirty
+     * @covers Ornament\Model::load
      */
     public function testModel()
     {
