@@ -22,9 +22,7 @@ trait Storage
             $reflector = new ReflectionClass($this);
             $annotations['class'] = new Annotations($reflector);
             $annotations['methods'] = [];
-            foreach ($reflector->getMethods(
-                ReflectionMethod::IS_PUBLIC
-            ) as $method) {
+            foreach ($reflector->getMethods() as $method) {
                 $annotations['methods'][$method->getName()]
                     = new Annotations($method);
             }
