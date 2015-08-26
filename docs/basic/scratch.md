@@ -52,6 +52,56 @@ based on your primary key(s).
 > fields (like `NOW()` for a timestamp). We want that data! It's just one
 > extra select after an otherwise already expensive operation.
 
+Instead of calling methods on adapters (which may or may not exist), you can
+also use _annotation_ to tell Ornament what to do:
+
+```php
+<?php
+
+/**
+ * @Identifier table_alias
+ */
+class MyModel
+{
+    use Pdo;
+
+    /**
+     * @PrimaryKey
+     */
+    public $id;
+    public $name;
+    /**
+     * @Virtual
+     */
+    private $something_our_query_calculates;
+
+    // etc
+}
+```
+
+On the Model, specify the annotation `@Identifier` to hardcode the identifier
+(table name, in the case of the Pdo adapter). Properties can be annotated in
+multiple ways (more on which later), but in this example we use `@PrimaryKey`
+to specify what our primary key is (note that Ornament guesses a property `$id`
+will be a primary key anyway, but for clarity's sake it's better to explicitly
+annotate or set), and `@Virtual` to tell Ornament that the property
+`$something_our_query_calculates` exists on the model, but is not something it
+should attempt to persist. Also, by defining the property as `private` it
+automatically becomes read-only (which makes sense for a generated value).
+
+> The `Storage` trait automatically exposes private and protected members as
+> read-only properties. If you have a member that should _really_ be invisible,
+> prefix its name with an underscore. Ornament will skip it. If you specify a
+> `getPropertyName` accessor, this will be called instead (useful if your
+> private property needs some operation done before being exposed). Similarly,
+> `setPropertyName` automatically is called when the property is changed from
+> the outside. _This_ is useful if setting should trigger a more complicated
+> operation/calculation instead of a simple `prop = value` operation.
+
+> Ornament internally sets some "really private properties" prefixed with a
+> double underscore. To avoid conflicts, it's best to avoid those in your
+> models.
+
 ## Updating
 Building on the previous example, we can also _update_ our `$model` object:
 
@@ -128,5 +178,8 @@ Ornament to differentiate by when multiple adapters are registered. You'll
 learn more about this later.
 
 For non-PDO Adapters (more about those later as well) one should also assume
-all public properties are "the fields" in the model.
+all public properties are "the editable fields" in the model. This is
+automatically augmented with fields defining a setter - unless any of them
+are specifically marked `@Virtual`, or they are marked as referencing an
+external model (see the chapter on getting data).
 
