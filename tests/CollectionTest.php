@@ -21,7 +21,7 @@ class Adapter implements Ornament\Adapter
 {
     private $storage = [];
 
-    public function query($model, array $parameters, array $ctor = [])
+    public function query($model, array $parameters, array $opts = [], array $ctor = [])
     {
         $ret = [];
         foreach ($this->storage as $model) {
