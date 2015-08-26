@@ -133,11 +133,6 @@ trait Storage
 
     public function __get($prop)
     {
-        if (property_exists($this, $prop)
-            && substr($prop, 0, 2) != '__'
-        ) {
-            return $this->$prop;
-        }
         $method = 'get'.ucfirst(Helper::denormalize($prop));
         if (method_exists($this, $method)) {
             return $this->$method();
@@ -147,6 +142,11 @@ trait Storage
                 return $this->callback($method);
             } catch (Exception\UndefinedCallback $e) {
             }
+        }
+        if (property_exists($this, $prop)
+            && substr($prop, 0, 2) != '__'
+        ) {
+            return $this->$prop;
         }
         trigger_error(sprintf(
             "Trying to get undefined virtual property %s on %s.",
