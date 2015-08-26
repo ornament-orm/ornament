@@ -143,7 +143,11 @@ trait Storage
             } catch (Exception\UndefinedCallback $e) {
             }
         }
-        throw new Exception\UnknownVirtualProperty($prop, $this);
+        trigger_error(sprintf(
+            "Trying to get undefined virtual property %s on %s.",
+            $prop,
+            get_class($this)
+        ), E_USER_NOTICE);
     }
 
     public function __set($prop, $value)
@@ -158,7 +162,11 @@ trait Storage
             } catch (Exception\UndefinedCallback $e) {
             }
         }
-        throw new Exception\UnknownVirtualProperty($prop, $this);
+        trigger_error(sprintf(
+            "Trying to set undefined or immutable virtual property %s on %s.",
+            $prop,
+            get_class($this)
+        ), E_USER_NOTICE);
     }
 
     public function __isset($prop)
