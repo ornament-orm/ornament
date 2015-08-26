@@ -112,7 +112,8 @@ class UserModel
 ## Manual loading
 Of course, you don't _need_ to use this; in fact, optimized queries are often
 too complicated to wrap in such an abstraction (the above is just quick and
-dirty for simpler models).
+dirty for simpler models). Or you might be using something like Doctrine's
+repositories for this.
 
 Simply write your own `load` and `query` implementations. `load` should update
 the current model with data as read from source, whilst `query` should return
@@ -134,4 +135,11 @@ use when instantiating the new models in the list.
 In the function body, simply do whatever you need to do to get your data, and
 then loop through it creating a new instance of `__CLASS__` with the correct
 properties set.
+
+There's also a `find` method which is shorthand for `query(...)[0]` and takes
+the same arguments.
+
+You can also avoid using `query` and `find` alltogether; keep in mind though
+that internally Ornament will still be using them, so for consistency it's
+usually best to override them.
 
