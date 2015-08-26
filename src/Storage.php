@@ -20,7 +20,8 @@ trait Storage
         static $annotations;
         if (!isset($annotations)) {
             $reflector = new ReflectionClass($this);
-            $annotions['methods'] = [];
+            $annotations['class'] = new Annotations($reflector);
+            $annotations['methods'] = [];
             foreach ($reflector->getMethods(
                 ReflectionMethod::IS_PUBLIC
             ) as $method) {
