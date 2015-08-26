@@ -187,14 +187,22 @@ add a fifth one, and remove the first. It's as easy as you'd expect:
 $newImage = new ImageModel;
 $newImage->url = 'http://example.com/path/to/image.jpg';
 $item->images[] = $newImage;
+$item->save(); // $newImage is now persited.
 
 // Delete the first image:
 $first = array_shift($item->images);
-$first->delete();
+$item->save(); // First image is now deleted.
+// ...or:
+$item->images[0]->delete(); // First image is now deleted.
 ```
 
 Physically removing the model from the array is not required for deletion, but
 if you don't it'll just linger around.
+
+> Autoloaded arrays of submodels on models aren't actually arrays, but rather an
+> instance of [Ornament\Collection](advanced/collection.md). Collections have
+> some interesting properties, but on the outside extend ArrayObject so behave
+> like arrays in day-to-day use.
 
 ## Updating indices
 Sometimes you'll want your models to use something akin to a `position` field
