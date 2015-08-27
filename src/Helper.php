@@ -2,6 +2,10 @@
 
 namespace Ornament;
 
+/**
+ * An abstract helper class containing some static methods use here and there
+ * (mostly internally).
+ */
 abstract class Helper
 {
     /**
