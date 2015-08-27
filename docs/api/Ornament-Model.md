@@ -46,7 +46,7 @@ Properties
 
 
 
-    private  $lastCheck
+    private  $lastCheck = array()
 
 
 
