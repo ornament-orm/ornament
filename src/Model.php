@@ -5,11 +5,12 @@ namespace Ornament;
 class Model
 {
     private $adapter;
-    private $lastCheck;
+    private $lastCheck = [];
 
     public function __construct(Adapter $adapter)
     {
         $this->adapter = $adapter;
+        $this->lastCheck = $this->export();
     }
 
     /**
