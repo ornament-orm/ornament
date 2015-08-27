@@ -200,7 +200,7 @@ Physically removing the model from the array is not required for deletion, but
 if you don't it'll just linger around.
 
 > Autoloaded arrays of submodels on models aren't actually arrays, but rather an
-> instance of [Ornament\Collection](advanced/collection.md). Collections have
+> instance of [Ornament\Collection](../advanced/collection.md). Collections have
 > some interesting properties, but on the outside extend ArrayObject so behave
 > like arrays in day-to-day use.
 
