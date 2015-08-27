@@ -3,7 +3,6 @@
 namespace Ornament\Adapter;
 
 use Ornament\Adapter;
-use Ornament\Repository;
 use Ornament\Model;
 use PDO as Base;
 use PDOException;
