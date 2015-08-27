@@ -4,6 +4,7 @@
         "mkdir ./.tmp",
         "mkdir ./docs/api",
         "vendor/bin/phpdoc -d ./src -t ./.tmp --template=\"xml\"",
-        "vendor/bin/phpdocmd ./.tmp/structure.xml docs/api/"
+        "vendor/bin/phpdocmd ./.tmp/structure.xml docs/api/",
+        "rm -rf ./.tmp"
     ]
 }
