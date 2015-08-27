@@ -1,0 +1,9 @@
+{
+    "php": [
+        "rm -rf ./.tmp",
+        "mkdir ./.tmp",
+        "mkdir ./docs/api",
+        "vendor/bin/phpdoc -d ./src -t ./.tmp --template=\"xml\"",
+        "vendor/bin/phpdocmd ./.tmp/structure.xml docs/api/"
+    ]
+}
