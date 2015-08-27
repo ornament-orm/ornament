@@ -75,7 +75,7 @@ This method is **static**.
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| $input | string | <p>The normalize input to denormalize.</p> |
+| $input | string | <p>The normalized input to denormalize.</p> |
 
 --
 
