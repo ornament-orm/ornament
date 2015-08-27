@@ -20,7 +20,7 @@ trait Pdo
         $annotations = $this->annotations()['properties'];
         if (!isset($fields)) {
             $fields = [];
-            foreach (Repository::getProperties($this) as $prop) {
+            foreach ($this->properties() as $prop) {
                 if (property_exists($this, $prop)
                     && !isset($annotations[$prop]['Virtual'])
                 ) {
