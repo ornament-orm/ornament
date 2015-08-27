@@ -1,6 +1,6 @@
 <?php
 
-namespace monolyth\model;
+namespace Ornament;
 
 interface Noncreateable
 {

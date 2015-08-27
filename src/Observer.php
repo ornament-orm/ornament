@@ -1,9 +1,10 @@
 <?php
 
-namespace monolyth;
+namespace Ornament;
+
 use SplSubject;
 
-trait Observer_Model
+trait Observer
 {
     public abstract function update(SplSubject $subject);
 }
