@@ -2,6 +2,10 @@
 
 namespace Ornament;
 
+/**
+ * An abstract helper class containing some static methods use here and there
+ * (mostly internally).
+ */
 abstract class Helper
 {
     /**
@@ -35,7 +39,7 @@ abstract class Helper
      * This is mostly used to denormalize virtual properties where this isn't
      * an issue anyway.
      *
-     * @param string $input The normalize input to denormalize.
+     * @param string $input The normalized input to denormalize.
      * @return string The denormalized string.
      */
     public static function denormalize($input)

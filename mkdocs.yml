@@ -1,17 +1,47 @@
-site_name: Ornament documentation
-
+site_name: 'Ornament documentation'
 pages:
-- Home:
-    - 'Quick start': 'index.md'
-
-- Basic:
-    - 'Overview of concepts and functionalities': 'basic/overview.md'
-    - 'Writing Ornament models from scratch': 'basic/scratch.md'
-    - 'Adding virtual fields': 'basic/virtual.md'
-    - 'Getting data into your models': 'basic/loading.md'
-
-- Advanced:
-    - 'Writing your own adapters': 'advanced/adapters.md'
-    - 'Using Collections': 'advanced/collection.md'
-
+    -
+        Home:
+            -
+                'Quick start': index.md
+    -
+        Basic:
+            -
+                'Overview of concepts and functionalities': basic/overview.md
+            -
+                'Writing Ornament models from scratch': basic/scratch.md
+            -
+                'Adding virtual fields': basic/virtual.md
+            -
+                'Getting data into your models': basic/loading.md
+    -
+        Advanced:
+            -
+                'Writing your own adapters': advanced/adapters.md
+            -
+                'Using Collections': advanced/collection.md
+    -
+        'API reference':
+            -
+                Index: api/ApiIndex.md
+            -
+                Ornament\Noncreateable: api/Ornament-Noncreateable.md
+            -
+                Ornament\Collection: api/Ornament-Collection.md
+            -
+                Ornament\Exception\UndefinedCallback: api/Ornament-Exception-UndefinedCallback.md
+            -
+                Ornament\Helper: api/Ornament-Helper.md
+            -
+                Ornament\Nondeleteable: api/Ornament-Nondeleteable.md
+            -
+                Ornament\Model: api/Ornament-Model.md
+            -
+                Ornament\Exception\PrimaryKey: api/Ornament-Exception-PrimaryKey.md
+            -
+                Ornament\Adapter: api/Ornament-Adapter.md
+            -
+                Ornament\Adapter\Pdo: api/Ornament-Adapter-Pdo.md
+            -
+                Ornament\Repository: api/Ornament-Repository.md
 theme: mkdocs

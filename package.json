@@ -1,0 +1,25 @@
+{
+  "name": "docile",
+  "version": "0.0.1",
+  "description": "",
+  "main": "gulpfile.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "gulp": ">=3.9.0",
+    "gulp-shell": ">=0.4.2",
+    "gulp-watch": ">=4.2.4"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/monomelodies/docile.git"
+  },
+  "author": "Marijn Ophorst <marijn@monomelodies.nl>",
+  "license": "MIT"
+}
