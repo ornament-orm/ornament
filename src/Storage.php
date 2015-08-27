@@ -4,26 +4,47 @@ namespace Ornament;
 
 use zpt\anno\Annotations;
 use ReflectionClass;
-use ReflectionMethod;
 use ReflectionProperty;
 
 trait Storage
 {
     /**
+     * Private array of registered adapters for this model.
+     */
+    private $__adapters = [];
+
+    /**
+     * Register the specified adapter for the given identifier and fields.
+     *
      * Generic method to add an Ornament adapter. Specific implementations
      * should generally supply a trait with an addImplementationAdapter that
      * takes care of wrapping the adapter in an Adapter-compatible object.
      *
-     * @param Adapter $adapter The Ornament adapter to register.
-     * @param string $id The identifier to use (table, endpoint, filename etc.)
-     * @param array $fields The members of the object this adapter is valid for.
-     *                      Should default to "all known public non-virtual
-     *                      members".
-     * @return Adapter The registered adapter, for easy chaining.
+     * @param Ornament\Adapter $adapter Adapter object implementing the
+     *  Ornament\Adapter interface.
+     * @param string $id Identifier for this adapter (table name, API endpoint,
+     *  etc.)
+     * @param array $fields Array of fields (properties) this adapter works on.
+     *  Should default to "all known public non-virtual members".
+     * @return Ornament\Adapter The registered adapter, for easy chaining.
      */
     protected function addAdapter(Adapter $adapter, $id, array $fields)
     {
-        Repository::registerAdapter($this, $adapter, $id, $fields);
+        $adapter_key = spl_object_hash($adapter)."#$id";
+        $model = new Model($adapter);
+        $new = true;
+        foreach ($fields as $field) {
+            if (isset($this->$field)) {
+                $new = false;
+            }
+            $model->$field =& $this->$field;
+        }
+        if ($new) {
+            $model->markNew();
+        } else {
+            $model->markClean();
+        }
+        $this->__adapters[$adapter_key] = $model;
         return $adapter;
     }
 
@@ -69,9 +90,8 @@ trait Storage
     {
         $annotations = $this->annotations();
         if ($includeBase) {
-            $adapters = Repository::getAdapters($this);
             $errors = [];
-            foreach ($adapters as $model) {
+            foreach ($this->__adapters as $model) {
                 $model->load();
             }
         }
@@ -108,9 +128,8 @@ trait Storage
     public function query(array $parameters, array $opts = [], array $ctor = [])
     {
         $annotations = $this->annotations();
-        $adapters = Repository::getAdapters($this);
         $errors = [];
-        foreach ($adapters as $model) {
+        foreach ($this->__adapters as $model) {
             return new Collection($model->query($this, $parameters));
         }
     }
@@ -142,9 +161,8 @@ trait Storage
      */
     public function save()
     {
-        $adapters = Repository::getAdapters($this);
         $errors = [];
-        foreach ($adapters as $model) {
+        foreach ($this->__adapters as $model) {
             if ($model->isDirty()) {
                 if ($error = $model->save()) {
                     $errors[] = $error;
@@ -192,9 +210,8 @@ trait Storage
      */
     public function delete()
     {
-        $adapters = Repository::getAdapters($this);
         $errors = [];
-        foreach ($adapters as $adapter) {
+        foreach ($this->__adapters as $adapter) {
             if ($error = $adapter->delete($this)) {
                 $errors[] = $error;
             }
@@ -211,8 +228,7 @@ trait Storage
      */
     public function markClean()
     {
-        $adapters = Repository::getAdapters($this);
-        foreach ($adapters as $model) {
+        foreach ($this->__adapters as $model) {
             $model->markClean();
         }
         foreach (Helper::export($this) as $prop => $value) {
@@ -328,6 +344,39 @@ trait Storage
      */
     public function __index($index)
     {
+    }
+
+    /**
+     * Returns an array of publicly accessible properties.
+     *
+     * @return array Array of property names.
+     */
+    public function properties()
+    {
+        static $reflected;
+        if (!isset($reflected)) {
+            $refclass = new ReflectionClass($this);
+            $reflected = [];
+            foreach ($refclass->getProperties(
+                ReflectionProperty::IS_PUBLIC
+            ) as $prop) {
+                if ($prop->isStatic()) {
+                    continue;
+                }
+                $reflected[] = $prop->getName();
+            }
+            foreach ($refclass->getMethods() as $method) {
+                if (preg_match('@^[gs]et@', $method->getName())) {
+                    $reflected[] = Helper::normalize(preg_replace(
+                        '@^[gs]et@',
+                        '',
+                        $method->getName()
+                    ));
+                }
+            }
+            $reflected = array_unique($reflected);
+        }
+        return $reflected;
     }
 }
 
