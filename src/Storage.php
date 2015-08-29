@@ -321,6 +321,9 @@ trait Storage
      */
     public function __isset($prop)
     {
+        if (property_exists($this, $prop) && $prop{0} != '_') {
+            return true;
+        }
         $method = 'get'.ucfirst(Helper::denormalize($prop));
         if (method_exists($this, $method)) {
             return true;
