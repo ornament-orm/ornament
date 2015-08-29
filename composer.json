@@ -18,6 +18,11 @@
         "phpunit/dbunit": ">=1.2",
         "monomelodies/docile": "@dev"
     },
+    "suggest": {
+        "monomelodies/dabble": "PDO-based database abstraction layer",
+        "monomelodies/dormant": "Dabble-specific Ornament adapter",
+        "monomelodies/formulaic": "PHP5 OO-forms with data binding for (Ornament) models"
+    },
     "autoload": {
         "psr-4": {
             "Ornament\\": "src/"
