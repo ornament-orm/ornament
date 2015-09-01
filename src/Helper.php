@@ -78,9 +78,9 @@ abstract class Helper
      * @param Object $object The object to check.
      * @return boolean true if Ornament-compatible, false otherwise.
      */
-    public static function isModel(object $object)
+    public static function isModel($object)
     {
-        return method_exists($object, 'save');
+        return is_object($object) && method_exists($object, 'save');
     }
 }
 
