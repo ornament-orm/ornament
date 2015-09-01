@@ -169,22 +169,23 @@ trait Storage
                 }
             }
         }
+        $annotations = $this->annotations()['properties'];
         foreach (Helper::export($this) as $prop => $value) {
-            if (is_object($value) && Helper::isModel($value)) {
-                if (!method_exists($value, 'isDirty') || $value->isDirty()) {
-                    if ($error = $value->save()) {
-                        $errors[] = $error;
-                    }
-                }
-            } elseif (is_object($value) && $value instanceof Collection) {
-                if ($value->dirty()) {
-                    if ($errs = $value->save()) {
-                        $errors = array_merge($errors, $errs);
-                    }
-                }
-            } elseif (is_array($value)) {
+            if (is_array($value)) {
+                $value = $this->$prop = new Collection($value);
+            }
+            if (is_object($value) && $value instanceof Collection) {
+                $anns = $annotations[$prop];
                 foreach ($this->$prop as $index => $model) {
-                    if (is_object($model) && Helper::isModel($model)) {
+                    if (Helper::isModel($model)) {
+                        if (isset($anns['Mapping'])) {
+                            $maps = $anns['Mapping'];
+                        } else {
+                            $maps = ['id' => $property];
+                        }
+                        foreach ($maps as $field => $mapto) {
+                            $model->$field = $this->$mapto;
+                        }
                         $model->__index($index);
                         if (!method_exists($model, 'isDirty')
                             || $model->isDirty()
@@ -193,6 +194,13 @@ trait Storage
                                 $errors[] = $error;
                             }
                         }
+                    }
+                }
+            }
+            if (Helper::isModel($value)) {
+                if (!method_exists($value, 'isDirty') || $value->isDirty()) {
+                    if ($error = $value->save()) {
+                        $errors[] = $error;
                     }
                 }
             }
