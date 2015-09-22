@@ -164,8 +164,8 @@ trait Storage
         $errors = [];
         foreach ($this->__adapters as $model) {
             if ($model->isDirty()) {
-                if ($error = $model->save()) {
-                    $errors[] = $error;
+                if (!$model->save()) {
+                    $errors[] = true;
                 }
             }
         }
@@ -190,8 +190,8 @@ trait Storage
                         if (!method_exists($model, 'isDirty')
                             || $model->isDirty()
                         ) {
-                            if ($error = $model->save()) {
-                                $errors[] = $error;
+                            if (!$model->save()) {
+                                $errors[] = true;
                             }
                         }
                     }
@@ -199,8 +199,8 @@ trait Storage
             }
             if (Helper::isModel($value)) {
                 if (!method_exists($value, 'isDirty') || $value->isDirty()) {
-                    if ($error = $value->save()) {
-                        $errors[] = $error;
+                    if (!$value->save()) {
+                        $errors[] = true;
                     }
                 }
             }
