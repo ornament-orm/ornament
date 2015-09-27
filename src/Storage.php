@@ -53,8 +53,8 @@ trait Storage
      * are cached for speed.
      *
      * @return array An array with `class`, `methods` and `properties` entries
-     *               containing an Annotations object (for classes) or a hahsh
-     *               of name/Annotations object pairs (for methods/properties).
+     *  containing an Annotations object (for classes) or a hash of
+     *  name/Annotations object pairs (for methods/properties).
      * @see zpt\anno\Annotations
      */
     private function annotations()
@@ -100,56 +100,6 @@ trait Storage
                 $this->$method($annotations['properties']);
             }
         }
-    }
-
-    /**
-     * Query this model for instances of itself matching $parameters and $opts,
-     * optionally instantiad using $ctor arguments.
-     *
-     * The possible values of $parameters and $opts are dependent on the
-     * adapter's implementation. Do note that they are passed verbatim to any
-     * (sub)adapters, so custom adapters are encouraged to adhere to the
-     * following rules:
-     * - $parameters is a one-dimensional hash of key/value pairs to match;
-     * - $opts is a one-dimensional hash of options. To limit the number of
-     *   results, use ['limit' => $number]. To offset the results, use
-     *   ['offset' => $number]. To order the results (if the adapter supports
-     *   that; Pdo does but maybe some API's don't) use ['order' => $bywhat].
-     * It's okay for an adapter to support more extensive parameters or
-     * additional options, but they'll likely be silently dropped by other
-     * adapters in use.
-     *
-     * @param array $parameters Key/value pair of parameters (e.g. ['id' => 1]).
-     * @param array $opts Key/value pair of options.
-     * @param array $ctor Optional constructor arguments.
-     * @return Ornament\Collection An Ornament\Collection of models found (which
-     *                             might be empty of course) of type __CLASS__.
-     */
-    public function query(array $parameters, array $opts = [], array $ctor = [])
-    {
-        $annotations = $this->annotations();
-        $errors = [];
-        foreach ($this->__adapters as $model) {
-            return new Collection($model->query($this, $parameters));
-        }
-    }
-
-    /**
-     * Identical to Ornament\Storage::query, except that it returns the first
-     * model found instead of an Ornament\Collection.
-     *
-     * @param array $parameters Key/value pair of parameters (e.g. ['id' => 1]).
-     * @param array $opts Key/value pair of options.
-     * @param array $ctor Optional constructor arguments.
-     * @return mixed A model of type __CLASS__, or false on failure.
-     * @see Ornament\Storage::query
-     */
-    public function find(array $parameters, array $opts = [], array $ctor = [])
-    {
-        if ($res = $this->query($parameters, $opts, $ctor)) {
-            return $res[0];
-        }
-        return false;
     }
     
     /**
