@@ -3,6 +3,7 @@
 class MyTableModel
 {
     use Ornament\Pdo;
+    use Ornament\Query;
 
     private $pdo;
 
