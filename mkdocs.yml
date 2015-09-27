@@ -20,28 +20,4 @@ pages:
                 'Writing your own adapters': advanced/adapters.md
             -
                 'Using Collections': advanced/collection.md
-    -
-        'API reference':
-            -
-                Index: api/ApiIndex.md
-            -
-                Ornament\Noncreateable: api/Ornament-Noncreateable.md
-            -
-                Ornament\Collection: api/Ornament-Collection.md
-            -
-                Ornament\Exception\UndefinedCallback: api/Ornament-Exception-UndefinedCallback.md
-            -
-                Ornament\Helper: api/Ornament-Helper.md
-            -
-                Ornament\Nondeleteable: api/Ornament-Nondeleteable.md
-            -
-                Ornament\Model: api/Ornament-Model.md
-            -
-                Ornament\Exception\PrimaryKey: api/Ornament-Exception-PrimaryKey.md
-            -
-                Ornament\Adapter: api/Ornament-Adapter.md
-            -
-                Ornament\Adapter\Pdo: api/Ornament-Adapter-Pdo.md
-            -
-                Ornament\Repository: api/Ornament-Repository.md
 theme: mkdocs
