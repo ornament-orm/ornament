@@ -121,7 +121,10 @@ separate class, and _still_ benefit from the setup already done:
 
 abstract class SimpleService extends SimpleModel
 {
-    // etc.
+    // We move this here:
+    use Ornament\Query;
+
+    // Static query methods etc.
 }
 ```
 
