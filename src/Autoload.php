@@ -41,7 +41,7 @@ trait Autoload
                     foreach ($maps as $key => $arg) {
                         $args[$key] = $this->$arg;
                     }
-                    $this->$property = $model->query($args);
+                    $this->$property = $class::query($args);
                 }
             }
         }
