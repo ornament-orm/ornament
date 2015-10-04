@@ -51,7 +51,9 @@ trait Query
      */
     public static function find($where, array $opts = [], array $ctor = [])
     {
-        if ($res = self::query($where, $opts, $ctor)) {
+        if ($res = self::query($where, $opts, $ctor)
+            and isset($res[0])
+        ) {
             return $res[0];
         }
         return false;
