@@ -2,6 +2,8 @@
 
 namespace Ornament;
 
+use StdClass;
+
 /**
  * An abstract helper class containing some static methods use here and there
  * (mostly internally).
@@ -63,7 +65,13 @@ abstract class Helper
      */
     public static function export($object)
     {
-        return get_object_vars($object);
+        $exported = new StdClass;
+        foreach ($object->properties() as $prop) {
+            $exported->$prop = $object->$prop;
+        }
+        return $exported;
+        $exported = get_object_vars($object);
+
     }
 
     /**
