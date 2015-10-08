@@ -27,11 +27,13 @@ trait Callback
         return $this->callback($fn, $args);
     }
 
-    private function listVirtualCallbackProperties()
+    public function listVirtualCallbackProperties()
     {
         $props = [];
         foreach (self::$callbacks as $name => $value) {
-            $props[] = Helper::normalize(substr($name, 3));
+            if (substr($name, 0, 3) == 'get') {
+                $props[] = Helper::normalize(substr($name, 3));
+            }
         }
         return $props;
     }
