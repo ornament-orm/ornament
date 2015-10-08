@@ -336,6 +336,12 @@ trait Storage
                 }
             }
             $reflected = array_unique($reflected);
+            if (method_exists($this, 'listVirtualCallbackProperties')) {
+                $reflected = array_merge(
+                    $reflected,
+                    $this->listVirtualCallbackProperties()
+                );
+            }
         }
         return $reflected;
     }
