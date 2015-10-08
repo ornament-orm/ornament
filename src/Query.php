@@ -35,7 +35,7 @@ trait Query
         $annotations = $instance->annotations();
         $errors = [];
         foreach ($instance->__adapters as $model) {
-            return new Collection($model->query($instance, $where));
+            return new Collection($model->query($instance, $where, $opts));
         }
     }
 
