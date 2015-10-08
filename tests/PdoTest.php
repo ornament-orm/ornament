@@ -131,6 +131,8 @@ class PdoTest extends PHPUnit_Extensions_Database_TestCase
         $model->code = false;
         $model->nice = true;
         $this->assertEquals(3, $model->status);
+        $exported = Ornament\Helper::export($model);
+        $this->assertTrue(isset($exported->nice));
     }
 
     public function testAutoload()
