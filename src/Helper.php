@@ -56,12 +56,12 @@ abstract class Helper
     }
 
     /**
-     * Exports the object as an array of public key/value pairs. Basically a
-     * simple wrapper for `get_object_vars` but usefull when calling from a
-     * `$this` context.
+     * Exports the object as a StdClass with all public properties set to their
+     * current values. This can safely be used in other interfaces. Note that
+     * obviously the returned object is no longer a "model", Ornament-wise.
      *
      * @param object The object to export.
-     * @return array An array of public properties with their values.
+     * @return StdClass A plain object mirroring $object.
      */
     public static function export($object)
     {
@@ -70,8 +70,6 @@ abstract class Helper
             $exported->$prop = $object->$prop;
         }
         return $exported;
-        $exported = get_object_vars($object);
-
     }
 
     /**
