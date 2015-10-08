@@ -32,12 +32,7 @@ final class Pdo implements Adapter
         return $this;
     }
 
-    public function query(
-        $object,
-        array $parameters,
-        array $opts = [],
-        array $ctor = []
-    )
+    public function query($object, array $parameters, array $opts = [])
     {
         $keys = [];
         $values = [];
@@ -68,10 +63,8 @@ final class Pdo implements Adapter
             $sql .= sprintf(' OFFSET %d', $opts['offset']);
         }
         $stmt = $this->getStatement($sql);
-        $stmt->setFetchMode(Base::FETCH_INTO, $object);
         $stmt->execute($values);
-        $class = get_class($object);
-        return $stmt->fetchAll(Base::FETCH_CLASS, $class, $ctor);
+        return $stmt->fetchAll(Base::FETCH_CLASS, get_class($object));
     }
 
     public function load(Model $object)
