@@ -335,14 +335,14 @@ trait Storage
                     ));
                 }
             }
-            $reflected = array_unique($reflected);
-            if (method_exists($this, 'listVirtualCallbackProperties')) {
-                $reflected = array_merge(
-                    $reflected,
-                    $this->listVirtualCallbackProperties()
-                );
-            }
         }
+        if (method_exists($this, 'listVirtualCallbackProperties')) {
+            $reflected = array_merge(
+                $reflected,
+                $this->listVirtualCallbackProperties()
+            );
+        }
+        $reflected = array_unique($reflected);
         return $reflected;
     }
 }
