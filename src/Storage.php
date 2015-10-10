@@ -234,7 +234,7 @@ trait Storage
     {
         // Do just-in-time checking for clean/dirty:
         if ($this->__state == 'clean') {
-            foreach ($this->__adapters as $model => $dummy) {
+            foreach ($this->__adapters as $model) {
                 if ($model->isDirty()) {
                     $this->__state = 'dirty';
                     break;
