@@ -148,7 +148,7 @@ class MyModel
 
     public function __construct(PDO $pdo)
     {
-        $this->guessTableName(function ($class) {
+        $this->guessIdentifier(function ($class) {
             $class = preg_replace('@\\\\?Model$@', '', $class);
             $table = strtolower(preg_replace_callback(
                 '@([a-z0-9])(_|\\\\)?([A-Z])@',
