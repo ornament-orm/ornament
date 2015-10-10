@@ -174,6 +174,9 @@ trait Storage
                 }
             }
         }
+        if (method_exists($this, 'notify')) {
+            $this->notify();
+        }
         $this->markClean();
         return $errors ? $errors : null;
     }
