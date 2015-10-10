@@ -13,6 +13,10 @@ trait Storage
      * Private storage of registered adapters for this model.
      */
     private $__adapters;
+    /**
+     * Private storage of model's current state.
+     */
+    private $__state = 'new';
 
     /**
      * Register the specified adapter for the given identifier and fields.
@@ -53,6 +57,11 @@ trait Storage
             $model->markClean();
         }
         $this->__adapters->attach($model);
+        foreach ($this->__adapters as $model) {
+            if (!$model->isNew()) {
+                $this->__state = 'clean';
+            }
+        }
         return $adapter;
     }
 
@@ -205,12 +214,34 @@ trait Storage
         foreach ($this->__adapters as $adapter) {
             if ($error = $adapter->delete($this)) {
                 $errors[] = $error;
+            } else {
+                $adapter->markDeleted();
             }
         }
         if (isset($notify)) {
             $notify->notify();
         }
+        $this->__state = 'deleted';
         return $errors ? $errors : null;
+    }
+
+    /**
+     * Get the current state of the model (new, clean, dirty or deleted).
+     *
+     * @return string The current state.
+     */
+    public function state()
+    {
+        // Do just-in-time checking for clean/dirty:
+        if ($this->__state == 'clean') {
+            foreach ($this->__adapters as $model => $dummy) {
+                if ($model->isDirty()) {
+                    $this->__state = 'dirty';
+                    break;
+                }
+            }
+        }
+        return $this->__state;
     }
 
     /**
@@ -240,6 +271,7 @@ trait Storage
                 }
             }
         }
+        $this->__state = 'clean';
     }
 
     /**
