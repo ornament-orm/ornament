@@ -20,6 +20,11 @@ trait Storage
      * should generally supply a trait with an addImplementationAdapter that
      * takes care of wrapping the adapter in an Adapter-compatible object.
      *
+     * Note that a model is considered "new" if fields are already populated.
+     * This works for Pdo-style adapters, since PDO::FETCH_CLASS sets values
+     * _prior_ to object instantiation. For adapters using other data sources
+     * (e.g. an API) you would need to correct this manually.
+     *
      * @param Ornament\Adapter $adapter Adapter object implementing the
      *  Ornament\Adapter interface.
      * @param string $id Identifier for this adapter (table name, API endpoint,
