@@ -83,24 +83,12 @@ class Model
     }
 
     /**
-     * Checks if this model is "new".
-     *
-     * @return boolean true if new, otherwise false.
+     * Marks this model as "deleted". The class will still contain old
+     * properties and values, but deletion has taken place.
      */
-    public function isNew()
+    public function markDeleted()
     {
-        return $this->lastCheck == [];
-    }
-
-    /**
-     * Checks if this model is "dirty" compared to the last known "clean"
-     * state.
-     *
-     * @return boolean true if dirty, otherwise false.
-     */
-    public function isDirty()
-    {
-        return $this->lastCheck != $this->export();
+        $this->lastCheck = null;
     }
 
     /**
@@ -112,6 +100,37 @@ class Model
     public function markClean()
     {
         $this->lastCheck = $this->export();
+    }
+
+    /**
+     * Checks if this model is "new".
+     *
+     * @return boolean true if new, otherwise false.
+     */
+    public function isNew()
+    {
+        return $this->lastCheck == [];
+    }
+
+    /**
+     * Checks if this model has been deleted.
+     *
+     * @return boolean true if deleted, otherwise false.
+     */
+    public function isDeleted()
+    {
+        return !isset($this->lastCheck);
+    }
+
+    /**
+     * Checks if this model is "dirty" compared to the last known "clean"
+     * state.
+     *
+     * @return boolean true if dirty, otherwise false.
+     */
+    public function isDirty()
+    {
+        return $this->lastCheck != $this->export();
     }
 }
 
