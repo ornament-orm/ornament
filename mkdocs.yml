@@ -20,4 +20,9 @@ pages:
                 'Writing your own adapters': advanced/adapters.md
             -
                 'Using Collections': advanced/collection.md
+            -
+                'Marker interfaces': advanced/markers.md
+            -
+                'Observer pattern': advanced/observer.md
+
 theme: mkdocs
