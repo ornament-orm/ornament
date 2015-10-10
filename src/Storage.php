@@ -113,12 +113,23 @@ trait Storage
      * but you should do so in your own code.
      *
      * @return null|array null on success, or an array of errors encountered.
+     * @throws Ornament\Exception\Immutable if the model implements the
+     *  Immutable interface and is thus immutable.
+     * @throws Ornament\Exception\Uncreateable if the model is new and implemnts
+     *  the Uncreatable interface and can therefor not be created
+     *  programmatically.
      */
     public function save()
     {
+        if ($this instanceof Immutable) {
+            throw new Exception\Immutable($this);
+        }
         $errors = [];
         foreach ($this->__adapters as $model) {
             if ($model->isDirty()) {
+                if ($model->isNew() && $this instanceof Uncreateable) {
+                    throw new Exception\Uncreatable($this);
+                }
                 if (!$model->save()) {
                     $errors[] = true;
                 }
@@ -170,9 +181,14 @@ trait Storage
      * but you should do so in your own code.
      *
      * @return null|array null on success, or an array of errors encountered.
+     * @throw Ornament\Exception\Undeleteable if the model implements the
+     *  Undeleteable interface and is hence "protected".
      */
     public function delete()
     {
+        if ($this instanceof Undeleteable) {
+            throw new Exception\Undeleteable($this);
+        }
         $errors = [];
         foreach ($this->__adapters as $adapter) {
             if ($error = $adapter->delete($this)) {
