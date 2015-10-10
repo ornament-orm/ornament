@@ -5,13 +5,14 @@ namespace Ornament;
 use zpt\anno\Annotations;
 use ReflectionClass;
 use ReflectionProperty;
+use SplObjectStorage;
 
 trait Storage
 {
     /**
-     * Private array of registered adapters for this model.
+     * Private storage of registered adapters for this model.
      */
-    private $__adapters = [];
+    private $__adapters;
 
     /**
      * Register the specified adapter for the given identifier and fields.
@@ -35,7 +36,9 @@ trait Storage
      */
     protected function addAdapter(Adapter $adapter, $id, array $fields)
     {
-        $adapter_key = spl_object_hash($adapter)."#$id";
+        if (!isset($this->__adapters)) {
+            $this->__adapters = new SplObjectStorage;
+        }
         $model = new Model($adapter);
         $new = true;
         foreach ($fields as $field) {
@@ -49,7 +52,7 @@ trait Storage
         } else {
             $model->markClean();
         }
-        $this->__adapters[$adapter_key] = $model;
+        $this->__adapters->attach($model);
         return $adapter;
     }
 
