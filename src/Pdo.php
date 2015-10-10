@@ -7,7 +7,7 @@ use PDO as Base;
 trait Pdo
 {
     use Storage;
-    use Table;
+    use Identify;
 
     public function addPdoAdapter(Base $pdo, $id = null, array $fields = null)
     {
@@ -15,7 +15,7 @@ trait Pdo
             $annotations = $this->annotations()['class'];
             $id = isset($annotations['Identifier']) ?
                 $annotations['Identifier'] :
-                $this->guessTableName();
+                $this->guessIdentifier();
         }
         $annotations = $this->annotations()['properties'];
         if (!isset($fields)) {
