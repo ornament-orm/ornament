@@ -65,10 +65,6 @@ class BitflagModel
      */
     public $status;
 
-    private $nice;
-    private $cats;
-    private $code;
-
     public function __construct()
     {
         $this->pdo = $GLOBALS['pdo'];
