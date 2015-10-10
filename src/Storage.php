@@ -128,6 +128,9 @@ trait Storage
             throw new Exception\Immutable($this);
         }
         $errors = [];
+        if (method_exists($this, 'notify')) {
+            $notify = clone $this;
+        }
         foreach ($this->__adapters as $model) {
             if ($model->isDirty()) {
                 if ($model->isNew() && $this instanceof Uncreateable) {
@@ -174,8 +177,8 @@ trait Storage
                 }
             }
         }
-        if (method_exists($this, 'notify')) {
-            $this->notify();
+        if (isset($notify)) {
+            $notify->notify();
         }
         $this->markClean();
         return $errors ? $errors : null;
@@ -192,6 +195,9 @@ trait Storage
      */
     public function delete()
     {
+        if (method_exists($this, 'notify')) {
+            $notify = clone $this;
+        }
         if ($this instanceof Undeleteable) {
             throw new Exception\Undeleteable($this);
         }
@@ -200,6 +206,9 @@ trait Storage
             if ($error = $adapter->delete($this)) {
                 $errors[] = $error;
             }
+        }
+        if (isset($notify)) {
+            $notify->notify();
         }
         return $errors ? $errors : null;
     }
