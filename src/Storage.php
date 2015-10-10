@@ -226,7 +226,7 @@ trait Storage
         }
         if (method_exists($this, 'callback')) {
             try {
-                return $this->callback($method);
+                return $this->callback($method, []);
             } catch (Exception\UndefinedCallback $e) {
             }
         }
