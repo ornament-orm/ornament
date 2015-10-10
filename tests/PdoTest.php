@@ -65,6 +65,10 @@ class BitflagModel
      */
     public $status;
 
+    private $nice;
+    private $cats;
+    private $code;
+
     public function __construct()
     {
         $this->pdo = $GLOBALS['pdo'];
@@ -132,7 +136,9 @@ class PdoTest extends PHPUnit_Extensions_Database_TestCase
         $model->nice = true;
         $this->assertEquals(3, $model->status);
         $exported = Ornament\Helper::export($model);
-        $this->assertTrue(isset($exported->nice));
+        $this->assertFalse($exported->code);
+        $this->assertTrue($exported->cats);
+        $this->assertTrue($exported->nice);
     }
 
     public function testAutoload()
