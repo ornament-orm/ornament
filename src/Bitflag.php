@@ -10,7 +10,7 @@ trait Bitflag
     {
         $name = ucfirst(Helper::denormalize($name));
         $this->callback("get$name", function () use ($bit, $source) {
-            return $this->$source & $bit;
+            return (bool)($this->$source & $bit);
         });
         $this->callback("set$name", function ($val) use ($bit, $source) {
             if ($val) {
