@@ -31,6 +31,18 @@ class ObserverModel implements SplObserver
     {
         echo 'noop';
     }
+
+    /** @Blind */
+    public function neverCalledForAnnotations(SubjectModel $subject)
+    {
+        echo 'foo';
+    }
+
+    /** @NotifyForState dirty */
+    public function onlyWhenDirty(SubjectModel $subject)
+    {
+        echo 'dirty';
+    }
 }
 
 class SubjectModel implements SplSubject
@@ -65,6 +77,17 @@ class ObserverTest extends PHPUnit_Framework_TestCase
         $another->attach($observer);
         // Don't call save, nothing should happen...
         $this->expectOutputString('yesalso');
+    }
+
+    public function testDirty()
+    {
+        $observer = new ObserverModel;
+        $subject = new SubjectModel;
+        $subject->attach($observer);
+        $subject->save();
+        $subject->name = 'whatever';
+        $subject->save();
+        $this->expectOutputString('yesalsoyesalsodirty');
     }
 }
 
