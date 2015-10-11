@@ -39,7 +39,7 @@ class BitflagTest extends PHPUnit_Extensions_Database_TestCase
         $model->status->code = false;
         $model->status->nice = true;
         $this->assertEquals(3, "{$model->status}");
-        $exported = (object)$model->jsonSerialize();
+        $exported = $model->jsonSerialize();
         $this->assertFalse($exported->status->code);
         $this->assertTrue($exported->status->cats);
         $this->assertTrue($exported->status->nice);
