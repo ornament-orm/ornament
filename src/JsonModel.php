@@ -26,10 +26,8 @@ trait JsonModel
                     continue;
                 }
                 if (!$prop->isPublic()) {
-                    if (isset(
-                        $annotations['properties'][$prop->getName()],
-                        $annotations['properties'][$prop->getName()]['Private']
-                    )) {
+                    $anns = $annotations['properties'][$prop->getName()];
+                    if ($prop->getName()[0] == '_' || isset($anns['Private'])) {
                         continue;
                     }
                 }
