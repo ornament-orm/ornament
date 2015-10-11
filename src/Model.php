@@ -3,6 +3,7 @@
 namespace Ornament;
 
 use SplObjectStorage;
+use ReflectionProperty;
 
 trait Model
 {
@@ -89,10 +90,10 @@ trait Model
         $new = true;
         foreach ($fields as $field => $alias) {
             $fname = is_numeric($field) ? $alias : $field;
-            if (isset($this->$fname)) {
+            if (!(new ReflectionProperty($this, $fname))->isDefault()) {
                 $new = false;
             }
-            $model->$alias =& $this->$field;
+            $model->$alias =& $this->$fname;
         }
         if ($new) {
             $model->markNew();
