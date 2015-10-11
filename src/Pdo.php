@@ -6,7 +6,6 @@ use PDO as Base;
 
 trait Pdo
 {
-    use Storage;
     use Identify;
 
     public function addPdoAdapter(Base $pdo, $id = null, array $fields = null)
