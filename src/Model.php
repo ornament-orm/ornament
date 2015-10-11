@@ -2,135 +2,310 @@
 
 namespace Ornament;
 
-class Model
+use SplObjectStorage;
+
+trait Model
 {
-    private $adapter;
-    private $lastCheck = [];
-
-    public function __construct(Adapter $adapter)
-    {
-        $this->adapter = $adapter;
-        $this->lastCheck = $this->export();
-    }
+    use Annotate;
+    use Identify;
 
     /**
-     * Query multiple models in an Adapter-independent way.
-     *
-     * @param object $parent The actual parent model to load into.
-     * @param array $parameters Key/value pair of parameters to query on (e.g.,
-     *                          ['parent' => 1]).
-     * @param array $opts Optional hash of options.
-     * @return array Array of models of the same type as $parent.
+     * Private storage of registered adapters for this model.
+     * @Private
      */
-    public function query($parent, array $parameters, array $opts = [])
-    {
-        return $this->adapter->query($parent, $parameters, $opts);
-    }
-
+    private $__adapters;
     /**
-     * (Re)load the model based on existing settings.
+     * Private storage of model's current state.
+     * @Private
      */
-    public function load()
+    private $__state = 'new';
+
+    /**
+     * Register the specified adapter for the given identifier and fields.
+     *
+     * Generic method to add an Ornament adapter. Specific implementations
+     * should generally supply a trait with an addImplementationAdapter that
+     * takes care of wrapping the adapter in an Adapter-compatible object.
+     *
+     * Note that a model is considered "new" if fields are already populated.
+     * This works for Pdo-style adapters, since PDO::FETCH_CLASS sets values
+     * _prior_ to object instantiation. For adapters using other data sources
+     * (e.g. an API) you would need to correct this manually.
+     *
+     * @param Ornament\Adapter $adapter Adapter object implementing the
+     *  Ornament\Adapter interface.
+     * @param string $id Identifier for this adapter (table name, API endpoint,
+     *  etc.)
+     * @param array $fields Array of fields (properties) this adapter works on.
+     *  Should default to "all known public non-virtual members".
+     * @return Ornament\Adapter The registered adapter, for easy chaining.
+     */
+    protected function addAdapter(Adapter $adapter, $id = null, array $fields = null)
     {
-        $this->adapter->load($this);
+        if (!isset($this->__adapters)) {
+            $this->__adapters = new SplObjectStorage;
+        }
+        if (!isset($id)) {
+            $annotations = $this->annotations()['class'];
+            $id = isset($annotations['Identifier']) ?
+                $annotations['Identifier'] :
+                $this->guessIdentifier();
+        }
+        $annotations = $this->annotations();
+        if (!isset($fields)) {
+            $fields = [];
+            foreach ($annotations['properties'] as $prop => $anno) {
+                if ($prop{0} != '_'
+                    && !isset($anno['Virtual'])
+                    && !isset($anno['Private'])
+                    && !is_array($this->$prop)
+                ) {
+                    $fields[] = $prop;
+                }
+            }
+        }
+        $pk = [];
+        foreach ($annotations as $prop => $anno) {
+            if (isset($anno['PrimaryKey'])) {
+                $pk[] = $prop;
+            }
+        }
+        if (!$pk && in_array('id', $fields)) {
+            $pk[] = 'id';
+        }
+        if ($pk) {
+            call_user_func_array([$adapter, 'setPrimaryKey'], $pk);
+        }
+        foreach ($this->annotations()['properties'] as $prop => $annotations) {
+            if (isset($annotations['Bitflag'])) {
+                $this->$prop = new Bitflag(
+                    $this->$prop,
+                    $annotations['Bitflag']
+                );
+            }
+        }
+        $adapter->setIdentifier($id)->setFields($fields);
+        $model = new Container($adapter);
+        $new = true;
+        foreach ($fields as $field => $alias) {
+            $fname = is_numeric($field) ? $alias : $field;
+            if (isset($this->$fname)) {
+                $new = false;
+            }
+            $model->$alias =& $this->$field;
+        }
+        if ($new) {
+            $model->markNew();
+        } else {
+            $model->markClean();
+        }
+        $this->__adapters->attach($model);
+        foreach ($this->__adapters as $model) {
+            if (!$model->isNew()) {
+                $this->__state = 'clean';
+            }
+        }
+        return $adapter;
     }
 
     /**
-     * Persist this model back to whatever storage Adapter it was constructed
-     * with.
+     * (Re)loads the current model based on the specified adapters.
+     * Optionally also calls methods annotated with `onLoad`.
      *
-     * @return boolean true on success, false on error.
+     * @param bool $includeBase If set to true, loads the base model; if false,
+     *                          only (re)loads linked models. Defaults to true.
+     * @return void
+     */
+    public function load($includeBase = true)
+    {
+        $annotations = $this->annotations();
+        if ($includeBase) {
+            $errors = [];
+            foreach ($this->__adapters as $model) {
+                $model->load();
+            }
+        }
+        foreach ($annotations['methods'] as $method => $anns) {
+            if (isset($anns['onLoad']) && $anns['onLoad']) {
+                $this->$method($annotations['properties']);
+            }
+        }
+    }
+    
+    /**
+     * Persists the model back to storage based on the specified adapters.
+     * If an adapter supports transactions, you are encouraged to use them;
+     * but you should do so in your own code.
+     *
+     * @return null|array null on success, or an array of errors encountered.
+     * @throws Ornament\Exception\Immutable if the model implements the
+     *  Immutable interface and is thus immutable.
+     * @throws Ornament\Exception\Uncreateable if the model is new and implemnts
+     *  the Uncreatable interface and can therefor not be created
+     *  programmatically.
      */
     public function save()
     {
-        if ($this->isNew()) {
-            return $this->adapter->create($this);
-        } else {
-            return $this->adapter->update($this);
+        if ($this instanceof Immutable) {
+            throw new Exception\Immutable($this);
         }
+        $errors = [];
+        if (method_exists($this, 'notify')) {
+            $notify = clone $this;
+        }
+        foreach ($this->__adapters as $model) {
+            if ($model->isDirty()) {
+                if ($model->isNew() && $this instanceof Uncreateable) {
+                    throw new Exception\Uncreateable($this);
+                }
+                if (!$model->save()) {
+                    $errors[] = true;
+                }
+            }
+        }
+        $annotations = $this->annotations()['properties'];
+        foreach ($annotations as $prop => $anns) {
+            if (isset($anns['Private']) || $prop{0} == '_') {
+                continue;
+            }
+            $value = $this->$prop;
+            if (is_array($value)) {
+                $value = $this->$prop = new Collection($value);
+            }
+            if (is_object($value) && $value instanceof Collection) {
+                $anns = $annotations[$prop];
+                foreach ($this->$prop as $index => $model) {
+                    if (Helper::isModel($model)) {
+                        if (isset($anns['Mapping'])) {
+                            $maps = $anns['Mapping'];
+                        } else {
+                            $maps = ['id' => $property];
+                        }
+                        foreach ($maps as $field => $mapto) {
+                            $model->$field = $this->$mapto;
+                        }
+                        $model->__index($index);
+                        if (!method_exists($model, 'isDirty')
+                            || $model->isDirty()
+                        ) {
+                            if (!$model->save()) {
+                                $errors[] = true;
+                            }
+                        }
+                    }
+                }
+            }
+            if (Helper::isModel($value)) {
+                if (!method_exists($value, 'isDirty') || $value->isDirty()) {
+                    if (!$value->save()) {
+                        $errors[] = true;
+                    }
+                }
+            }
+        }
+        if (isset($notify)) {
+            $notify->notify();
+        }
+        $this->markClean();
+        return $errors ? $errors : null;
     }
 
     /**
-     * Delete this model from whatever storage Adapter it was constructed with.
+     * Deletes the current model from storage based on the specified adapters.
+     * If an adapter supports transactions, you are encouraged to use them;
+     * but you should do so in your own code.
      *
-     * @return boolean true on success, false on error.
+     * @return null|array null on success, or an array of errors encountered.
+     * @throw Ornament\Exception\Undeleteable if the model implements the
+     *  Undeleteable interface and is hence "protected".
      */
     public function delete()
     {
-        return $this->adapter->delete($this);
+        if (method_exists($this, 'notify')) {
+            $notify = clone $this;
+        }
+        if ($this instanceof Undeleteable) {
+            throw new Exception\Undeleteable($this);
+        }
+        $errors = [];
+        foreach ($this->__adapters as $adapter) {
+            if ($error = $adapter->delete($this)) {
+                $errors[] = $error;
+            } else {
+                $adapter->markDeleted();
+            }
+        }
+        if (isset($notify)) {
+            $notify->notify();
+        }
+        $this->__state = 'deleted';
+        return $errors ? $errors : null;
     }
 
     /**
-     * Internal helper method to export the model's public properties.
+     * Get the current state of the model (new, clean, dirty or deleted).
      *
-     * @return array An array of key/value pairs.
+     * @return string The current state.
      */
-    private function export()
+    public function state()
     {
-        $o = $this;
-        return call_user_func(function () use ($o) {
-            return get_object_vars($o);
-        });
+        // Do just-in-time checking for clean/dirty:
+        if ($this->__state == 'clean') {
+            foreach ($this->__adapters as $model) {
+                if ($model->isDirty()) {
+                    $this->__state = 'dirty';
+                    break;
+                }
+            }
+        }
+        return $this->__state;
     }
 
     /**
-     * Marks this model as being "new" (i.e., save proxies to create, not
-     * update).
-     */
-    public function markNew()
-    {
-        $this->lastCheck = [];
-    }
-
-    /**
-     * Marks this model as "deleted". The class will still contain old
-     * properties and values, but deletion has taken place.
-     */
-    public function markDeleted()
-    {
-        $this->lastCheck = null;
-    }
-
-    /**
-     * Marks this model as "clean", i.e. set clean state to current state,
-     * no questions asked.
+     * Mark the current model as 'clean', i.e. not dirty. Useful if you manually
+     * set values after loading from storage that shouldn't count towards
+     * "dirtiness". Called automatically after saving.
      *
-     * @see Ornament\Storage::markClean
+     * @return void
      */
     public function markClean()
     {
-        $this->lastCheck = $this->export();
+        foreach ($this->__adapters as $model) {
+            $model->markClean();
+        }
+        $annotations = $this->annotations()['properties'];
+        foreach ($annotations as $prop => $anns) {
+            if (isset($anns['Private']) || $prop{0} == '_') {
+                continue;
+            }
+            $value = $this->$prop;
+            if (is_object($value) && Helper::isModel($value)) {
+                if (method_exists($value, 'markClean')) {
+                    $value->markClean();
+                }
+            } elseif (is_array($value)) {
+                foreach ($this->$prop as $index => $model) {
+                    if (is_object($model) && Helper::isModel($model)) {
+                        if (method_exists($model, 'markClean')) {
+                            $model->markClean();
+                        }
+                    }
+                }
+            }
+        }
+        $this->__state = 'clean';
     }
 
     /**
-     * Checks if this model is "new".
+     * You'll want to specify a custom implementation for this. For models in an
+     * array (on another model, of course) it is called with the current index.
+     * Obviously, overriding is only needed if the index is relevant.
      *
-     * @return boolean true if new, otherwise false.
+     * @param integer $index The current index in the array.
+     * @return void
      */
-    public function isNew()
+    public function __index($index)
     {
-        return $this->lastCheck == [];
-    }
-
-    /**
-     * Checks if this model has been deleted.
-     *
-     * @return boolean true if deleted, otherwise false.
-     */
-    public function isDeleted()
-    {
-        return !isset($this->lastCheck);
-    }
-
-    /**
-     * Checks if this model is "dirty" compared to the last known "clean"
-     * state.
-     *
-     * @return boolean true if dirty, otherwise false.
-     */
-    public function isDirty()
-    {
-        return $this->lastCheck != $this->export();
     }
 }
 
