@@ -10,10 +10,8 @@ use InvalidArgumentException;
 
 final class Pdo implements Adapter
 {
-    private $adapter;
-    private $table;
-    private $fields;
-    private $primaryKey = [];
+    use Defaults;
+
     private $statements = [];
 
     public function __construct(Base $adapter)
@@ -22,24 +20,6 @@ final class Pdo implements Adapter
             throw new InvalidArgumentException;
         }
         $this->adapter = $adapter;
-    }
-
-    public function setIdentifier($table)
-    {
-        $this->table = $table;
-        return $this;
-    }
-
-    public function setFields(array $fields)
-    {
-        $this->fields = $fields;
-        return $this;
-    }
-
-    public function setPrimaryKey($field)
-    {
-        $this->primaryKey = func_get_args();
-        return $this;
     }
 
     public function query($object, array $parameters, array $opts = [])
@@ -54,11 +34,11 @@ final class Pdo implements Adapter
             $sql = "SELECT * FROM %1\$s WHERE %2\$s";
             $sql = sprintf(
                 $sql,
-                $this->table,
+                $this->identifier,
                 implode(' AND ', $keys)
             );
         } else {
-            $sql = "SELECT * FROM {$this->table}";
+            $sql = "SELECT * FROM {$this->identifier}";
         }
         if (isset($opts['order'])) {
             $sql .= sprintf(
@@ -92,7 +72,7 @@ final class Pdo implements Adapter
         $sql = "SELECT * FROM %1\$s WHERE %2\$s";
         $stmt = $this->getStatement(sprintf(
             $sql,
-            $this->table,
+            $this->identifier,
             implode(' AND ', $pks)
         ));
         $stmt->setFetchMode(Base::FETCH_INTO, $object);
@@ -122,7 +102,7 @@ final class Pdo implements Adapter
         }
         $sql = sprintf(
             $sql,
-            $this->table,
+            $this->identifier,
             implode(', ', array_keys($placeholders)),
             implode(', ', $placeholders)
         );
@@ -131,7 +111,7 @@ final class Pdo implements Adapter
         if (count($this->primaryKey) == 1) {
             $pk = $this->primaryKey[0];
             try {
-                $object->$pk = $this->adapter->lastInsertId($this->table);
+                $object->$pk = $this->adapter->lastInsertId($this->identifier);
                 $this->load($object);
             } catch (PDOException $e) {
                 // Means this is not supported by this engine.
@@ -156,7 +136,7 @@ final class Pdo implements Adapter
         }
         $sql = sprintf(
             $sql,
-            $this->table,
+            $this->identifier,
             implode(', ', $placeholders),
             implode(' AND ', $primaries)
         );
@@ -176,7 +156,7 @@ final class Pdo implements Adapter
         }
         $sql = sprintf(
             $sql,
-            $this->table,
+            $this->identifier,
             implode(' AND ', $primaries)
         );
         $stmt = $this->getStatement($sql);
