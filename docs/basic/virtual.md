@@ -87,7 +87,7 @@ $user->name = 'Marijn';
 $user->nice = true;
 ```
 
-This is a very common scenario, so Ornament offers the `Bitflag` trait to
+This is a very common scenario, so Ornament offers a `Bitflag` class to
 simplify this task for you:
 
 ```php
@@ -99,27 +99,29 @@ class UserModel
 {
     use Pdo;
 
-    const STATUS_NICE = 1;
-    const STATUS_CATS = 2;
-    const STATUS_CODE = 4;
-
     public $id;
     public $name;
+    /** @Bitflag nice = 1, cats = 2, code = 4 */
     public $status;
 
     public function __construct(PDO $pdo)
     {
         $this->addPdoAdapter($pdo);
-        $this->addBitflag('nice', self::STATUS_NICE, 'status');
-        $this->addBitflag('cats', self::STATUS_CATS, 'status');
-        $this->addBitflag('code', self::STATUS_CODE, 'status');
     }
 }
 ```
 
-These calls do the same as the manual getter/setter from the previous example,
-only in much less lines of code. Which is good, because we're lazy. The
-arguments are `property`, `bit` and `source property`.
+Now, the `status` property is itself an object that handles bitwise operations:
+
+```php
+<?php
+
+$user->status->nice = true;
+```
+These calls accomplish the same as the manual getter/setter from the previous
+example, only in much less lines of code. Which is good, because we're lazy.
+
+A `Bitflag` can also be `__toString`ed yielding the underlying integer value.
 
 ## Example with other models (one-to-one or one-to-many relationships)
 Apart from the simplest of projects, you'll usually want to mix and match models
