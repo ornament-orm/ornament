@@ -8,6 +8,8 @@ use StdClass;
 
 trait JsonModel
 {
+    use Model;
+
     /**
      * Returns a hash of properties/values suitable for Json serialization.
      *
