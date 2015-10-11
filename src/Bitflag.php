@@ -3,6 +3,7 @@
 namespace Ornament;
 
 use JsonSerializable;
+use StdClass;
 
 /**
  * Object to emulate a bitflag in Ornament models.
@@ -52,9 +53,9 @@ class Bitflag implements JsonSerializable
 
     public function jsonSerialize()
     {
-        $arr = [];
+        $arr = new StdClass;
         foreach ($this->map as $key => $value) {
-            $arr[$key] = (bool)($this->source & $value);
+            $arr->$key = (bool)($this->source & $value);
         }
         return $arr;
     }
