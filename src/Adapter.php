@@ -5,9 +5,9 @@ namespace Ornament;
 interface Adapter
 {
     public function query($model, array $ps, array $opts = []);
-    public function load(Model $model);
-    public function create(Model $model);
-    public function update(Model $model);
-    public function delete(Model $model);
+    public function load(Container $model);
+    public function create(Container $model);
+    public function update(Container $model);
+    public function delete(Container $model);
 }
 
