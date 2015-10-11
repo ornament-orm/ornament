@@ -15,8 +15,7 @@
     },
     "require-dev": {
         "phpunit/phpunit": ">=4.0",
-        "phpunit/dbunit": ">=1.2",
-        "monomelodies/docile": "@dev"
+        "phpunit/dbunit": ">=1.2"
     },
     "suggest": {
         "monomelodies/dabble": "PDO-based database abstraction layer",
