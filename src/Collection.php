@@ -3,8 +3,9 @@
 namespace Ornament;
 
 use ArrayObject;
+use JsonSerializable;
 
-class Collection extends ArrayObject
+class Collection extends ArrayObject implements JsonSerializable
 {
     private $original = [];
     private $map = [];
@@ -77,6 +78,24 @@ class Collection extends ArrayObject
             $key = spl_object_hash($model);
             $this->storage[$key] = $model;
         }
+    }
+
+    /**
+     * Export the Collection as a regular PHP array for Json serialization.
+     *
+     * @return array The Collection represented as an array.
+     */
+    public function jsonSerialize()
+    {
+        $out = [];
+        foreach ($this->storage as $model) {
+            if ($model instanceof JsonSerializable) {
+                $out[] = $model->jsonSerialize();
+            } else {
+                $out[] = (object)(array)$model;
+            }
+        }
+        return $out;
     }
 }
 
