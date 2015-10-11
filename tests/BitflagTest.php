@@ -2,7 +2,6 @@
 
 class BitflagModel implements JsonSerializable
 {
-    use Ornament\Pdo;
     use Ornament\JsonModel;
 
     /** @Private */
@@ -17,7 +16,7 @@ class BitflagModel implements JsonSerializable
     public function __construct()
     {
         $this->pdo = $GLOBALS['pdo'];
-        $this->addPdoAdapter($this->pdo);
+        $this->addAdapter(new Ornament\Adapter\Pdo($this->pdo));
     }
 }
 
