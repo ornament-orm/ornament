@@ -17,12 +17,15 @@ trait Pdo
                 $annotations['Identifier'] :
                 $this->guessIdentifier();
         }
-        $annotations = $this->annotations()['properties'];
+        $annotations = $this->annotations();
         if (!isset($fields)) {
             $fields = [];
-            foreach ($this->properties() as $prop) {
+            foreach ($annotations['properties'] as $prop => $anno) {
+                if (isset($anno['Private'])) {
+                    continue;
+                }
                 if (property_exists($this, $prop)
-                    && !isset($annotations[$prop]['Virtual'])
+                    && !isset($anno['Virtual'])
                     && !is_array($this->$prop)
                 ) {
                     $fields[] = $prop;
