@@ -131,7 +131,7 @@ trait Storage
         }
         $annotations = $this->annotations()['properties'];
         foreach ($annotations as $prop => $anns) {
-            if (isset($anns['Private'])) {
+            if (isset($anns['Private']) || $prop{0} == '_') {
                 continue;
             }
             $value = $this->$prop;
