@@ -3,7 +3,7 @@
 namespace Ornament\Adapter;
 
 use Ornament\Adapter;
-use Ornament\Model;
+use Ornament\Container;
 use PDO as Base;
 use PDOException;
 use InvalidArgumentException;
@@ -16,14 +16,24 @@ final class Pdo implements Adapter
     private $primaryKey = [];
     private $statements = [];
 
-    public function __construct(Base $adapter, $table, array $fields)
+    public function __construct(Base $adapter)
     {
         if (!($adapter instanceof Base)) {
             throw new InvalidArgumentException;
         }
         $this->adapter = $adapter;
+    }
+
+    public function setIdentifier($table)
+    {
         $this->table = $table;
+        return $this;
+    }
+
+    public function setFields(array $fields)
+    {
         $this->fields = $fields;
+        return $this;
     }
 
     public function setPrimaryKey($field)
@@ -67,7 +77,7 @@ final class Pdo implements Adapter
         return $stmt->fetchAll(Base::FETCH_CLASS, get_class($object));
     }
 
-    public function load(Model $object)
+    public function load(Container $object)
     {
         $pks = [];
         $values = [];
@@ -99,7 +109,7 @@ final class Pdo implements Adapter
         return $this->statements[$sql];
     }
 
-    public function create(Model $object)
+    public function create(Container $object)
     {
         $sql = "INSERT INTO %1\$s (%2\$s) VALUES (%3\$s)";
         $placeholders = [];
@@ -130,7 +140,7 @@ final class Pdo implements Adapter
         return $retval;
     }
 
-    public function update(Model $object)
+    public function update(Container $object)
     {
         $sql = "UPDATE %1\$s SET %2\$s WHERE %3\$s";
         $placeholders = [];
@@ -156,7 +166,7 @@ final class Pdo implements Adapter
         return $retval;
     }
 
-    public function delete(Model $object)
+    public function delete(Container $object)
     {
         $sql = "DELETE FROM %1\$s WHERE %2\$s";
         $primaries = [];
