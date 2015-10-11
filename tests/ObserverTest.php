@@ -1,10 +1,8 @@
 <?php
 
-use Ornament\Model;
-
 class ObserverModel implements SplObserver
 {
-    use Ornament\Storage;
+    use Ornament\Model;
     use Ornament\Observer;
 
     public $id;
@@ -47,7 +45,7 @@ class ObserverModel implements SplObserver
 
 class SubjectModel implements SplSubject
 {
-    use Ornament\Storage;
+    use Ornament\Model;
     use Ornament\Subject;
 
     public $id;

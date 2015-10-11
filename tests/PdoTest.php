@@ -1,8 +1,10 @@
 <?php
 
+use Ornament\Adapter;
+
 class MyTableModel
 {
-    use Ornament\Pdo;
+    use Ornament\Model;
     use Ornament\Query;
 
     /** @Private */
@@ -15,13 +17,13 @@ class MyTableModel
     public function __construct()
     {
         $this->pdo = $GLOBALS['pdo'];
-        $this->addPdoAdapter($this->pdo);
+        $this->addAdapter(new Adapter\Pdo($this->pdo));
     }
 }
 
 class LinkedTableModel
 {
-    use Ornament\Pdo;
+    use Ornament\Model;
     use Ornament\Autoload;
 
     /** @Private */
@@ -38,7 +40,7 @@ class LinkedTableModel
     public function __construct()
     {
         $this->pdo = $GLOBALS['pdo'];
-        $this->addPdoAdapter($this->pdo);
+        $this->addAdapter(new Adapter\Pdo($this->pdo));
     }
 
     public function getPercentage()

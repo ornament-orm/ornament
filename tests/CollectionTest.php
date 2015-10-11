@@ -1,10 +1,11 @@
 <?php
 
 use Ornament\Model;
+use Ornament\Container;
 
 class DummyModel
 {
-    use Ornament\Storage;
+    use Model;
 
     public $id;
     public $name;
@@ -20,6 +21,7 @@ class DummyModel
 class Adapter implements Ornament\Adapter
 {
     private $storage = [];
+    private $fields = ['id', 'name', 'comment'];
 
     public function query($model, array $parameters, array $opts = [], array $ctor = [])
     {
@@ -34,24 +36,39 @@ class Adapter implements Ornament\Adapter
         }
         return $ret;
     }
+
+    public function setIdentifier($identifier)
+    {
+        return $this;
+    }
+
+    public function setFields(array $fields)
+    {
+        return $this;
+    }
+
+    public function setPrimaryKey($field)
+    {
+        return $this;
+    }
     
-    public function load(Model $model)
+    public function load(Container $model)
     {
         $model = $this->storage[$model->id];
     }
     
-    public function create(Model $model)
+    public function create(Container $model)
     {
         $model->id = count($this->storage) + 1;
         $this->storage[$model->id] = $model;
     }
     
-    public function update(Model $model)
+    public function update(Container $model)
     {
         $this->storage[$model->id] = $model;
     }
     
-    public function delete(Model $model)
+    public function delete(Container $model)
     {
         unset($this->storage[$model->id]);
     }
