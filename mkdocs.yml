@@ -17,6 +17,8 @@ pages:
     -
         Advanced:
             -
+                'Exporting JSON': advanced/json.md
+            -
                 'Writing your own adapters': advanced/adapters.md
             -
                 'Using Collections': advanced/collection.md
