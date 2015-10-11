@@ -22,8 +22,8 @@ trait Pdo
             $fields = [];
             foreach ($annotations['properties'] as $prop => $anno) {
                 if ($prop{0} != '_'
-                    && property_exists($this, $prop)
-                    && !isset($anno['Virtual'], $anno['Private'])
+                    && !isset($anno['Virtual'])
+                    && !isset($anno['Private'])
                     && !is_array($this->$prop)
                 ) {
                     $fields[] = $prop;
