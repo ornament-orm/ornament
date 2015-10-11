@@ -2,19 +2,20 @@
 
 namespace Ornament;
 
-use zpt\anno\Annotations;
-use ReflectionClass;
-use ReflectionProperty;
 use SplObjectStorage;
 
 trait Storage
 {
+    use Annotate;
+
     /**
      * Private storage of registered adapters for this model.
+     * @Private
      */
     private $__adapters;
     /**
      * Private storage of model's current state.
+     * @Private
      */
     private $__state = 'new';
 
@@ -43,6 +44,14 @@ trait Storage
         if (!isset($this->__adapters)) {
             $this->__adapters = new SplObjectStorage;
         }
+        foreach ($this->annotations()['properties'] as $prop => $annotations) {
+            if (isset($annotations['Bitflag'])) {
+                $this->$prop = new Bitflag(
+                    $this->$prop,
+                    $annotations['Bitflag']
+                );
+            }
+        }
         $model = new Model($adapter);
         $new = true;
         foreach ($fields as $field) {
@@ -63,36 +72,6 @@ trait Storage
             }
         }
         return $adapter;
-    }
-
-    /**
-     * Internal helper method to get this model's annotations. The annotations
-     * are cached for speed.
-     *
-     * @return array An array with `class`, `methods` and `properties` entries
-     *  containing an Annotations object (for classes) or a hash of
-     *  name/Annotations object pairs (for methods/properties).
-     * @see zpt\anno\Annotations
-     */
-    private function annotations()
-    {
-        static $annotations;
-        if (!isset($annotations)) {
-            $reflector = new ReflectionClass($this);
-            $annotations['class'] = new Annotations($reflector);
-            $annotations['methods'] = [];
-            foreach ($reflector->getMethods() as $method) {
-                $annotations['methods'][$method->getName()]
-                    = new Annotations($method);
-            }
-            foreach ($reflector->getProperties(
-                ReflectionProperty::IS_PUBLIC
-            ) as $property) {
-                $annotations['properties'][$property->getName()]
-                    = new Annotations($property);
-            }
-        }
-        return $annotations;
     }
 
     /**
@@ -143,7 +122,7 @@ trait Storage
         foreach ($this->__adapters as $model) {
             if ($model->isDirty()) {
                 if ($model->isNew() && $this instanceof Uncreateable) {
-                    throw new Exception\Uncreatable($this);
+                    throw new Exception\Uncreateable($this);
                 }
                 if (!$model->save()) {
                     $errors[] = true;
@@ -151,7 +130,11 @@ trait Storage
             }
         }
         $annotations = $this->annotations()['properties'];
-        foreach (Helper::export($this) as $prop => $value) {
+        foreach ($annotations as $prop => $anns) {
+            if (isset($anns['Private'])) {
+                continue;
+            }
+            $value = $this->$prop;
             if (is_array($value)) {
                 $value = $this->$prop = new Collection($value);
             }
@@ -256,7 +239,12 @@ trait Storage
         foreach ($this->__adapters as $model) {
             $model->markClean();
         }
-        foreach (Helper::export($this) as $prop => $value) {
+        $annotations = $this->annotations()['properties'];
+        foreach ($annotations as $prop => $anns) {
+            if (isset($anns['Private'])) {
+                continue;
+            }
+            $value = $this->$prop;
             if (is_object($value) && Helper::isModel($value)) {
                 if (method_exists($value, 'markClean')) {
                     $value->markClean();
@@ -331,6 +319,11 @@ trait Storage
             } catch (Exception\UndefinedCallback $e) {
             }
         }
+        if (!isset($this->__adapters)) {
+            echo 'setting';
+            $this->$prop = $value;
+            return;
+        }
         trigger_error(sprintf(
             "Trying to set undefined or immutable virtual property %s on %s.",
             $prop,
@@ -367,51 +360,13 @@ trait Storage
     /**
      * You'll want to specify a custom implementation for this. For models in an
      * array (on another model, of course) it is called with the current index.
+     * Obviously, overriding is only needed if the index is relevant.
      *
      * @param integer $index The current index in the array.
      * @return void
      */
     public function __index($index)
     {
-    }
-
-    /**
-     * Returns an array of publicly accessible properties.
-     *
-     * @return array Array of property names.
-     */
-    public function properties()
-    {
-        static $reflected;
-        if (!isset($reflected)) {
-            $refclass = new ReflectionClass($this);
-            $reflected = [];
-            foreach ($refclass->getProperties(
-                ReflectionProperty::IS_PUBLIC
-            ) as $prop) {
-                if ($prop->isStatic()) {
-                    continue;
-                }
-                $reflected[] = $prop->getName();
-            }
-            foreach ($refclass->getMethods() as $method) {
-                if (preg_match('@^[gs]et@', $method->getName())) {
-                    $reflected[] = Helper::normalize(preg_replace(
-                        '@^[gs]et@',
-                        '',
-                        $method->getName()
-                    ));
-                }
-            }
-        }
-        if (method_exists($this, 'listVirtualCallbackProperties')) {
-            $reflected = array_merge(
-                $reflected,
-                $this->listVirtualCallbackProperties()
-            );
-        }
-        $reflected = array_unique($reflected);
-        return $reflected;
     }
 }
 
