@@ -56,23 +56,6 @@ abstract class Helper
     }
 
     /**
-     * Exports the object as a StdClass with all public properties set to their
-     * current values. This can safely be used in other interfaces. Note that
-     * obviously the returned object is no longer a "model", Ornament-wise.
-     *
-     * @param object The object to export.
-     * @return StdClass A plain object mirroring $object.
-     */
-    public static function export($object)
-    {
-        $exported = new StdClass;
-        foreach ($object->properties() as $prop) {
-            $exported->$prop = $object->$prop;
-        }
-        return $exported;
-    }
-
-    /**
      * Returns true if the input is an Ornament-compatible model, false
      * otherwise.
      *
@@ -86,7 +69,8 @@ abstract class Helper
      */
     public static function isModel($object)
     {
-        return is_object($object) && method_exists($object, 'save');
+        return is_object($object)
+            && in_array('Ornament\Storage', class_uses($object));
     }
 }
 
