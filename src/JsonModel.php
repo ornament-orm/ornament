@@ -4,6 +4,7 @@ namespace Ornament;
 
 use JsonSerializable;
 use ReflectionClass;
+use StdClass;
 
 trait JsonModel
 {
@@ -45,16 +46,16 @@ trait JsonModel
                 }
             }
         }
-        $json = [];
+        $json = new StdClass;
         foreach ($reflected as $prop) {
-            $json[$prop] = $this->$prop;
+            $json->$prop = $this->$prop;
         }
         foreach ($callbacks as $name => $callback) {
-            $json[$name] = call_user_func([$this, $callback]);
+            $json->$name = call_user_func([$this, $callback]);
         }
         foreach ($json as &$value) {
             if (is_object($value) && $value instanceof JsonSerializable) {
-                $value = (object)$value->jsonSerialize();
+                $value = $value->jsonSerialize();
             }
         }
         return $json;
