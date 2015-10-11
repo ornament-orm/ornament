@@ -11,6 +11,7 @@ use SplObjectStorage;
 
 trait Subject
 {
+    /** @Private */
     private $__observers;
 
     /**
