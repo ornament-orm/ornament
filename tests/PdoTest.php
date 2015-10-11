@@ -5,6 +5,7 @@ class MyTableModel
     use Ornament\Pdo;
     use Ornament\Query;
 
+    /** @Private */
     private $pdo;
 
     public $id;
@@ -23,6 +24,7 @@ class LinkedTableModel
     use Ornament\Pdo;
     use Ornament\Autoload;
 
+    /** @Private */
     private $pdo;
 
     public $id;
@@ -46,32 +48,6 @@ class LinkedTableModel
 
     public function __index($index)
     {
-    }
-}
-
-class BitflagModel
-{
-    use Ornament\Pdo;
-    use Ornament\Bitflag;
-
-    const STATUS_NICE = 1;
-    const STATUS_CATS = 2;
-    const STATUS_CODE = 4;
-
-    private $pdo;
-
-    /**
-     * @PrimaryKey
-     */
-    public $status;
-
-    public function __construct()
-    {
-        $this->pdo = $GLOBALS['pdo'];
-        $this->addPdoAdapter($this->pdo);
-        $this->addBitflag('nice', self::STATUS_NICE, 'status');
-        $this->addBitflag('cats', self::STATUS_CATS, 'status');
-        $this->addBitflag('code', self::STATUS_CODE, 'status');
     }
 }
 
@@ -120,21 +96,6 @@ class PdoTest extends PHPUnit_Extensions_Database_TestCase
         $linked->save();
         $this->assertEquals(80, $linked->percentage);
         $linked->percentage = 70;
-    }
-
-    public function testBitflags()
-    {
-        $model = new BitflagModel(self::$pdo);
-        $model->code = true;
-        $model->cats = true;
-        $this->assertEquals(6, $model->status);
-        $model->code = false;
-        $model->nice = true;
-        $this->assertEquals(3, $model->status);
-        $exported = Ornament\Helper::export($model);
-        $this->assertFalse($exported->code);
-        $this->assertTrue($exported->cats);
-        $this->assertTrue($exported->nice);
     }
 
     public function testAutoload()
