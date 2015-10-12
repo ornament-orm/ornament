@@ -8,10 +8,12 @@ use JsonSerializable;
 class Collection extends SplObjectStorage implements JsonSerializable
 {
     private $_deleted;
+    private $_meta;
 
-    public function __construct(array $input)
+    public function __construct(array $input, $parent = null, array $map = [])
     {
         $this->_original = count($input);
+        $this->_meta = compact('parent', 'map');
         foreach ($input as $value) {
             $this->attach($value);
         }
@@ -130,6 +132,11 @@ class Collection extends SplObjectStorage implements JsonSerializable
     public function offsetSet($object, $data)
     {
         $this->_deleted->detach($object);
+        if (isset($this->_meta['parent'], $this->_meta['map'])) {
+            foreach ($this->_meta['map'] as $cf => $pf) {
+                $object->$cf =& $this->_meta['parent']->$pf;
+            }
+        }
         return parent::offsetSet($object, $data);
     }
 
