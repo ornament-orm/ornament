@@ -63,7 +63,13 @@ trait Model
                     $fields[] = $prop;
                 }
                 if (is_array($this->$prop)) {
-                    $this->$prop = new Collection([]);
+                    $this->$prop = new Collection(
+                        [],
+                        $this,
+                        isset($anno['Mapping']) ?
+                            $anno['Mapping'] :
+                            ['id' => $prop]
+                    );
                 }
             }
         }
