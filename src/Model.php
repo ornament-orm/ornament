@@ -46,13 +46,12 @@ trait Model
         if (!isset($this->__adapters)) {
             $this->__adapters = new SplObjectStorage;
         }
+        $annotations = $this->annotations();
         if (!isset($id)) {
-            $annotations = $this->annotations()['class'];
-            $id = isset($annotations['Identifier']) ?
-                $annotations['Identifier'] :
+            $id = isset($annotations['class']['Identifier']) ?
+                $annotations['class']['Identifier'] :
                 $this->guessIdentifier();
         }
-        $annotations = $this->annotations();
         if (!isset($fields)) {
             $fields = [];
             foreach ($annotations['properties'] as $prop => $anno) {
@@ -62,6 +61,9 @@ trait Model
                     && !is_array($this->$prop)
                 ) {
                     $fields[] = $prop;
+                }
+                if (is_array($this->$prop)) {
+                    $this->$prop = new Collection([]);
                 }
             }
         }
@@ -170,9 +172,6 @@ trait Model
                 continue;
             }
             $value = $this->$prop;
-            if (is_array($value)) {
-                $value = $this->$prop = new Collection($value);
-            }
             if (is_object($value) && $value instanceof Collection) {
                 $anns = $annotations[$prop];
                 foreach ($this->$prop as $index => $model) {
