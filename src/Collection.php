@@ -33,7 +33,7 @@ class Collection extends SplObjectStorage implements JsonSerializable
         $errors = [];
         $i = 0;
         foreach ($this as $model) {
-            if (!Helper::isModel($model)) {
+            if (!Helper::modelSaveMethod($model)) {
                 continue;
             }
             $model->__index($i++);
@@ -116,7 +116,7 @@ class Collection extends SplObjectStorage implements JsonSerializable
         if (is_integer($object)) {
             $i = 0;
             foreach ($this as $o) {
-                if (!Helper::isModel($o)) {
+                if (!Helper::modelSaveMethod($o)) {
                     continue;
                 }
                 if ($i++ == $object) {
