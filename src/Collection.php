@@ -131,6 +131,10 @@ class Collection extends SplObjectStorage implements JsonSerializable
 
     public function offsetSet($object, $data)
     {
+        if (!is_object($object) && is_object($data)) {
+            $object = $data;
+            $data = null;
+        }
         $this->_deleted->detach($object);
         if (isset($this->_meta['parent'], $this->_meta['map'])) {
             foreach ($this->_meta['map'] as $cf => $pf) {
@@ -142,8 +146,20 @@ class Collection extends SplObjectStorage implements JsonSerializable
 
     public function offsetUnset($object)
     {
-        $this->_deleted->attach($object);
-        return parent::offsetUnset($object);
+        if (is_object($object)) {
+            $this->_deleted->attach($object);
+            return parent::offsetUnset($object);
+        } elseif (is_integer($object)) {
+            $i = 0;
+            foreach ($this as $o) {
+                if (!is_object($o)) {
+                    continue;
+                }
+                if ($object == $i++) {
+                    return parent::offsetUnset($o);
+                }
+            }
+        }
     }
 }
 
