@@ -3,25 +3,20 @@
 namespace Ornament;
 
 use ArrayObject;
+use SplObjectStorage;
 use JsonSerializable;
 
-class Collection extends ArrayObject implements JsonSerializable
+class Collection extends SplObjectStorage implements JsonSerializable
 {
-    private $original = [];
-    private $map = [];
+    private $_deleted;
 
-    public function __construct($input)
+    public function __construct(array $input)
     {
-        if (!is_array($input)) {
-            parent::__construct([]);
-            return;
+        $this->_original = count($input);
+        foreach ($input as $value) {
+            $this->attach($value);
         }
-        foreach ($input as $index => $value) {
-            $key = spl_object_hash($value);
-            $this->original[$key] = $value;
-            $this->map[$index] = $key;
-        }
-        parent::__construct($input);
+        $this->_deleted = new SplObjectStorage;
     }
 
     /**
@@ -35,23 +30,23 @@ class Collection extends ArrayObject implements JsonSerializable
     {
         $foundkeys = [];
         $errors = [];
-        foreach ($this->getArrayCopy() as $i => $model) {
-            $key = spl_object_hash($model);
-            $model->__index($i);
-            $foundkeys[$key] = true;
+        $i = 0;
+        foreach ($this as $model) {
+            if (!Helper::isModel($model)) {
+                continue;
+            }
+            $model->__index($i++);
             if ($error = $model->save()) {
                 $errors[] = $error;
             }
-            $this->original[$key] = $model;
         }
-        foreach ($this->original as $key => $model) {
-            if (!isset($foundkeys[$key])) {
-                if ($error = $model->delete()) {
-                    $errors[] = $error;
-                }
-                unset($this->original[$key]);
+        foreach ($this->_deleted as $model) {
+            if ($error = $model->delete()) {
+                $errors[] = $error;
             }
+            $this->_deleted->detach($model);
         }
+        $this->_original = count($this);
         return $errors ? $errors : null;
     }
 
@@ -63,7 +58,20 @@ class Collection extends ArrayObject implements JsonSerializable
      */
     public function dirty()
     {
-        return $this->getArrayCopy() != array_values($this->original);
+        if (count($this) != $this->_original) {
+            return true;
+        }
+        if (count($this->_deleted)) {
+            return true;
+        }
+        foreach ($this as $model) {
+            if (is_object($model)
+                && ($model->isDirty() || $model->isNew())
+            ) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -73,11 +81,12 @@ class Collection extends ArrayObject implements JsonSerializable
      */
     public function markClean()
     {
-        $this->storage = [];
-        foreach ($this->getArrayCopy() as $model) {
-            $key = spl_object_hash($model);
-            $this->storage[$key] = $model;
+        foreach ($this as $model) {
+            if (is_object($model)) {
+                $model->markClean();
+            }
         }
+        $this->_original = count($this);
     }
 
     /**
@@ -88,7 +97,10 @@ class Collection extends ArrayObject implements JsonSerializable
     public function jsonSerialize()
     {
         $out = [];
-        foreach ($this->storage as $model) {
+        foreach ($this as $model) {
+            if (!is_object($model)) {
+                continue;
+            }
             if ($model instanceof JsonSerializable) {
                 $out[] = $model->jsonSerialize();
             } else {
@@ -96,6 +108,36 @@ class Collection extends ArrayObject implements JsonSerializable
             }
         }
         return $out;
+    }
+
+    public function offsetGet($object)
+    {
+        if (is_integer($object)) {
+            $i = 0;
+            foreach ($this as $o) {
+                if (!Helper::isModel($o)) {
+                    continue;
+                }
+                if ($i++ == $object) {
+                    return $o;
+                }
+            }
+            throw new UnexpectedValueException;
+        } elseif (is_object($object)) {
+            return parent::offsetGet($object);
+        }
+    }
+
+    public function offsetSet($object, $data)
+    {
+        $this->_deleted->detach($object);
+        return parent::offsetSet($object, $data);
+    }
+
+    public function offsetUnset($object)
+    {
+        $this->_deleted->attach($object);
+        return parent::offsetUnset($object);
     }
 }
 
