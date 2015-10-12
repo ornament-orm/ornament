@@ -122,7 +122,9 @@ class PdoTest extends PHPUnit_Extensions_Database_TestCase
         $model = new MyTableModel(self::$pdo);
         $list = $model->query([]);
         $this->assertEquals(3, count($list));
-        $this->assertEquals('MyTableModel', get_class($list[0]));
+        foreach ($list as $l) {
+            $this->assertEquals('MyTableModel', get_class($l));
+        }
     }
 
     public function getConnection()

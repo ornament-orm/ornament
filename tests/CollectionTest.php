@@ -89,7 +89,7 @@ class CollectionTest extends PHPUnit_Framework_TestCase
         $collection = new Ornament\Collection($items);
         $collection->save();
         $this->assertEquals(2, count($collection));
-        unset($collection[0]);
+        unset($collection[$one]);
         $this->assertEquals(1, count($collection));
         $this->assertEquals(2, count($adapter->query($two, [])));
         $collection->save();
@@ -98,7 +98,7 @@ class CollectionTest extends PHPUnit_Framework_TestCase
 
     public function testEmptyCollection()
     {
-        $collection = new Ornament\Collection(false);
+        $collection = new Ornament\Collection([]);
     }
 }
 
