@@ -2,7 +2,6 @@
 
 namespace Ornament;
 
-use ArrayObject;
 use SplObjectStorage;
 use JsonSerializable;
 
