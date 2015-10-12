@@ -70,7 +70,8 @@ abstract class Helper
     public static function isModel($object)
     {
         return is_object($object)
-            && in_array('Ornament\Storage', class_uses($object));
+            && (in_array('Ornament\Model', class_uses($object))
+                || method_exists($object, 'save'));
     }
 }
 
