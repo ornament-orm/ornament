@@ -57,7 +57,7 @@ class Collection extends SplObjectStorage implements JsonSerializable
      *
      * @return boolean true if dirty, otherwise false.
      */
-    public function dirty()
+    public function isDirty()
     {
         if (count($this) != $this->_original) {
             return true;
