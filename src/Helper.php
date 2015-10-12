@@ -56,22 +56,24 @@ abstract class Helper
     }
 
     /**
-     * Returns true if the input is an Ornament-compatible model, false
-     * otherwise.
-     *
-     * This function _also_ returns true if the object has a `save` method. It's
-     * then assumed that its implementation is compatible with Ornament's.
+     * Returns the name of the save function if the input is an
+     * Ornament-compatible object, null otherwise.
      *
      * todo: Add aliases for other ORMs so the user can mix and match.
      *
-     * @param Object $object The object to check.
-     * @return boolean true if Ornament-compatible, false otherwise.
+     * @param object $object The object to check.
+     * @return string|null A function name or null.
      */
-    public static function isModel($object)
+    public static function modelSaveMethod($object)
     {
-        return is_object($object)
-            && (in_array('Ornament\Model', class_uses($object))
-                || method_exists($object, 'save'));
+        if (is_object($object)) {
+            if (in_array('Ornament\Model', class_uses($object))
+                || method_exists($object, 'save')
+            ) {
+                return 'save';
+            }
+        }
+        return null;
     }
 }
 
