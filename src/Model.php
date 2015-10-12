@@ -178,32 +178,15 @@ trait Model
                 continue;
             }
             $value = $this->$prop;
-            if (is_object($value) && $value instanceof Collection) {
-                $anns = $annotations[$prop];
-                foreach ($this->$prop as $index => $model) {
-                    if (Helper::isModel($model)) {
-                        if (isset($anns['Mapping'])) {
-                            $maps = $anns['Mapping'];
-                        } else {
-                            $maps = ['id' => $property];
-                        }
-                        foreach ($maps as $field => $mapto) {
-                            $model->$field = $this->$mapto;
-                        }
-                        $model->__index($index);
-                        if (!method_exists($model, 'isDirty')
-                            || $model->isDirty()
-                        ) {
-                            if (!$model->save()) {
-                                $errors[] = true;
-                            }
-                        }
+            if (is_object($value)) {
+                if ($value instanceof Collection && $value->isDirty()) {
+                    if ($error = $value->save()) {
+                        $errors = array_merge($errors, $error);
                     }
-                }
-            }
-            if (Helper::isModel($value)) {
-                if (!method_exists($value, 'isDirty') || $value->isDirty()) {
-                    if (!$value->save()) {
+                } elseif ($save = Helper::modelSaveMethod($value)
+                    and !method_exists($value, 'isDirty') || $value->isDirty()
+                ) {
+                    if (!$value->$save()) {
                         $errors[] = true;
                     }
                 }
@@ -285,18 +268,8 @@ trait Model
                 continue;
             }
             $value = $this->$prop;
-            if (is_object($value) && Helper::isModel($value)) {
-                if (method_exists($value, 'markClean')) {
-                    $value->markClean();
-                }
-            } elseif (is_array($value)) {
-                foreach ($this->$prop as $index => $model) {
-                    if (is_object($model) && Helper::isModel($model)) {
-                        if (method_exists($model, 'markClean')) {
-                            $model->markClean();
-                        }
-                    }
-                }
+            if (is_object($value) and method_exists($value, 'markClean')) {
+                $value->markClean();
             }
         }
         $this->__state = 'clean';
