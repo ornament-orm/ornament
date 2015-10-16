@@ -2,6 +2,10 @@
 
 namespace Ornament;
 
+use StdClass;
+use ReflectionClass;
+use ReflectionProperty;
+
 /**
  * A container is a simple internal object representation of (part of) a model.
  */
@@ -70,6 +74,12 @@ class Container
      */
     private function export()
     {
+        $ref = new ReflectionClass($this);
+        $exported = new StdClass;
+        foreach ($ref->getProperties(ReflectionProperty::IS_PUBLIC) as $prop) {
+            $exported->{$prop->name} = $this->{$prop->name};
+        }
+        return $exported;
         $o = $this;
         return call_user_func(function () use ($o) {
             return get_object_vars($o);
