@@ -3,7 +3,6 @@
 namespace Ornament;
 
 use StdClass;
-use ReflectionClass;
 use ReflectionProperty;
 
 /**
@@ -74,16 +73,13 @@ class Container
      */
     private function export()
     {
-        $ref = new ReflectionClass($this);
         $exported = new StdClass;
-        foreach ($ref->getProperties(ReflectionProperty::IS_PUBLIC) as $prop) {
-            $exported->{$prop->name} = $this->{$prop->name};
+        foreach ($this as $name => $field) {
+            if ((new ReflectionProperty($this, $name))->isPublic()) {
+                $exported->$name = "$field";
+            }
         }
         return $exported;
-        $o = $this;
-        return call_user_func(function () use ($o) {
-            return get_object_vars($o);
-        });
     }
 
     /**
