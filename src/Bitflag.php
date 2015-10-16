@@ -46,6 +46,11 @@ class Bitflag implements JsonSerializable
         return $this->source & $this->map[$prop];
     }
 
+    public function __isset($prop)
+    {
+        return isset($this->map[$prop]);
+    }
+
     public function __toString()
     {
         return (string)$this->source;
