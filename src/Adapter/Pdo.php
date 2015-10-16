@@ -6,22 +6,38 @@ use Ornament\Adapter;
 use Ornament\Container;
 use PDO as Base;
 use PDOException;
-use InvalidArgumentException;
 
+/**
+ * Ornament adapter for PDO data sources.
+ */
 final class Pdo implements Adapter
 {
     use Defaults;
 
+    /** @var Private statement cache. */
     private $statements = [];
 
+    /**
+     * Constructor. Pass in the adapter (instanceof PDO) as an argument.
+     *
+     * @return void
+     */
     public function __construct(Base $adapter)
     {
-        if (!($adapter instanceof Base)) {
-            throw new InvalidArgumentException;
-        }
         $this->adapter = $adapter;
     }
 
+    /**
+     * Query $object (a model) using $parameters with optional $opts.
+     *
+     * @param object $object A model object.
+     * @param array $parameters Key/value pair or WHERE statements, e.g.
+     *  ['id' => 1].
+     * @param array $opts Hash of options. Supported keys are 'limit',
+     *  'offset' and 'order' and they correspond to their SQL equivalents.
+     * @return array|false An array of objects of the same class as $object, or
+     *  false on query failure.
+     */
     public function query($object, array $parameters, array $opts = [])
     {
         $keys = [];
@@ -57,7 +73,16 @@ final class Pdo implements Adapter
         return $stmt->fetchAll(Base::FETCH_CLASS, get_class($object));
     }
 
-    public function load(Container $object)
+    /**
+     * Load data into a single model.
+     *
+     * @param object $model The original model.
+     * @param Container $object A container object.
+     * @return void
+     * @throws Ornament\PrimaryKeyException if no primary key was set or could
+     *  be determined, and loading would inevitably fail.
+     */
+    public function load($model, Container $object)
     {
         $pks = [];
         $values = [];
@@ -66,7 +91,7 @@ final class Pdo implements Adapter
                 $pks[$key] = sprintf('%s = ?', $key);
                 $values[] = $object->$key;
             } else {
-                throw new PrimaryKeyException($object);
+                throw new PrimaryKeyException($model);
             }
         }
         $sql = "SELECT * FROM %1\$s WHERE %2\$s";
@@ -81,6 +106,12 @@ final class Pdo implements Adapter
         $object->markClean();
     }
 
+    /**
+     * Private helper to either get or create a PDOStatement.
+     *
+     * @param string $sql SQL to prepare the statement with.
+     * @return PDOStatement A PDOStatement.
+     */
     private function getStatement($sql)
     {
         if (!isset($this->statements[$sql])) {
@@ -89,6 +120,12 @@ final class Pdo implements Adapter
         return $this->statements[$sql];
     }
 
+    /**
+     * Persist the newly created Container $object.
+     *
+     * @param Ornament\Container $object The model to persist.
+     * @return boolean True on success, else false.
+     */
     public function create(Container $object)
     {
         $sql = "INSERT INTO %1\$s (%2\$s) VALUES (%3\$s)";
@@ -120,6 +157,12 @@ final class Pdo implements Adapter
         return $retval;
     }
 
+    /**
+     * Persist the existing Container $object back to the RDBMS.
+     *
+     * @param Ornament\Container $object The model to persist.
+     * @return boolean True on success, else false.
+     */
     public function update(Container $object)
     {
         $sql = "UPDATE %1\$s SET %2\$s WHERE %3\$s";
@@ -146,6 +189,12 @@ final class Pdo implements Adapter
         return $retval;
     }
 
+    /**
+     * Delete the existing Container $object from the RDBMS.
+     *
+     * @param Ornament\Container $object The model to delete.
+     * @return boolean True on success, else false.
+     */
     public function delete(Container $object)
     {
         $sql = "DELETE FROM %1\$s WHERE %2\$s";
