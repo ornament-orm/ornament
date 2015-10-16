@@ -98,7 +98,7 @@ trait Model
         $new = true;
         foreach ($fields as $field => $alias) {
             $fname = is_numeric($field) ? $alias : $field;
-            if (!(new ReflectionProperty($this, $fname))->isDefault()) {
+            if (in_array($fname, $pk) && isset($this->$fname)) {
                 $new = false;
             }
             $model->$alias =& $this->$fname;

@@ -29,12 +29,13 @@ class Bitflag implements JsonSerializable
     private $map;
 
     /**
-     * Constructor.
+     * Constructor. Normally called by models based on the @Bitflag annotation,
+     * but you can also construct manually.
      *
-     * @param integer $source The initial byte value.
-     * @param array $valueMap Key/value map of bitnames/bits to use. Normally
-     *  passed on construction from an @Bitflag annotation, but can also be set
-     *  manually.
+     * @param integer $source The initial value of the byte storing the
+     *  bitflags.
+     * @param array $valueMap Key/value pair of bit names/values, e.g. "on" =>
+     *  1, "female" => 2 etc.
      */
     public function __construct($source, array $valueMap = [])
     {
@@ -43,16 +44,17 @@ class Bitflag implements JsonSerializable
     }
 
     /**
-     * Magic setter so "properties" can be set to true or false instead of
-     * manually needing to juggle bits.
+     * Magic setter. Silently fails if the specified property was not available
+     * in the $valueMap used during construction.
      *
-     * @param string $prop The property to toggle.
-     * @param mixed $value Its new status. Anything truthy sets the bit to on
-     *  (|=), anything falsy to off (&=~).
-     * @return void
+     * @param string $prop Name of the bit to set.
+     * @param mixed $value Truthy to turn on, falsy to turn off.
      */
     public function __set($prop, $value)
     {
+        if (!isset($this->map[$prop])) {
+            return;
+        }
         if ($value) {
             $this->source |= $this->map[$prop];
         } else {
@@ -61,20 +63,35 @@ class Bitflag implements JsonSerializable
     }
 
     /**
-     * Magic getter for bits.
+     * Magic getter to retrieve the status of a bit.
      *
-     * @param string $prop The name of the flag to check.
-     * @return bool True if the bit is currently set, else false.
+     * @param string $prop Name of the bit to check.
+     * @return boolen True if the bit is on, false if off or unknown.
      */
     public function __get($prop)
     {
+        if (!isset($this->map[$prop])) {
+            return false;
+        }
         return (bool)($this->source & $this->map[$prop]);
     }
 
     /**
-     * Returns the actual value of the byte as a string.
+     * Check if a bit exists in this bitflag.
      *
-     * @return string Integer casted as string.
+     * @param string $prop Name of the bit to check.
+     * @return boolean True if the bit is known in this bitflag, false
+     *  otherwise.
+     */
+    public function __isset($prop)
+    {
+        return isset($this->map[$prop]);
+    }
+
+    /**
+     * Return the original source byte as a string.
+     *
+     * @return string Integer casted to string containing the current value.
      */
     public function __toString()
     {
@@ -82,18 +99,18 @@ class Bitflag implements JsonSerializable
     }
 
     /**
-     * Exports the bitflag as a JSON-serializable StdClass.
+     * Export this bitflag as a Json object. All known bits are exported as
+     * properties with true or false depending on their status.
      *
-     * @return StdClass Simple object containing the bits with true/false
-     *  values.
+     * @return StdClass A standard class suitable for json_encode.
      */
     public function jsonSerialize()
     {
-        $arr = new StdClass;
+        $ret = new StdClass;
         foreach ($this->map as $key => $value) {
-            $arr->$key = (bool)($this->source & $value);
+            $ret->$key = (bool)($this->source & $value);
         }
-        return $arr;
+        return $ret;
     }
 
     /**
