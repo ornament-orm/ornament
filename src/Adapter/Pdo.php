@@ -12,7 +12,7 @@ use zpt\anno\AnnotationParser;
 /**
  * Ornament adapter for PDO data sources.
  */
-final class Pdo implements Adapter
+class Pdo implements Adapter
 {
     use Defaults;
 
@@ -45,10 +45,6 @@ final class Pdo implements Adapter
         $keys = [];
         $values = [];
         $identifier = $this->identifier;
-        foreach ($object->annotations()['properties'] as $anno) {
-            if (isset($anno['From'])) {
-            }
-        }
         foreach ($parameters as $key => $value) {
             $keys[$key] = sprintf('%s = ?', $key);
             $values[] = $value;
