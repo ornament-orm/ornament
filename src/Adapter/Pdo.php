@@ -109,15 +109,9 @@ class Pdo implements Adapter
                 throw new PrimaryKeyException($object);
             }
         }
-        $fields = [];
-        $joins = [];
-        foreach ($this->annotations['properties'] as $field => $anno) {
-            if ($field{0} == '_' || isset($anno['Private'])) {
-                continue;
-            }
-            if (!isset($anno['From'])) {
-                $fields[] = "$identifier.$field";
-            }
+        $fields = $this->fields;
+        foreach ($fields as &$field) {
+            $field = "$identifier.$field";
         }
         $identifier .= $this->generateJoin($fields);
         $sql = "SELECT %s FROM %s WHERE %s";
@@ -170,12 +164,13 @@ class Pdo implements Adapter
                 }
             }
         }
-        foreach ($props as $local => $anno) {
-            if (isset($anno['From'])) {
-                $fields[] = sprintf(
+        foreach ($fields as &$field) {
+            $name = str_replace("{$this->identifier}.", '', $field);
+            if (isset($props[$name]['From'])) {
+                $field = sprintf(
                     '%s %s',
-                    $anno['From'],
-                    $local
+                    $props[$name]['From'],
+                    $name
                 );
             }
         }
