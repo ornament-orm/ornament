@@ -6,6 +6,8 @@ use Ornament\Adapter;
 use Ornament\Container;
 use PDO as Base;
 use PDOException;
+use zpt\anno\Annotations;
+use zpt\anno\AnnotationParser;
 
 /**
  * Ornament adapter for PDO data sources.
@@ -42,20 +44,32 @@ final class Pdo implements Adapter
     {
         $keys = [];
         $values = [];
+        $identifier = $this->identifier;
+        foreach ($object->annotations()['properties'] as $anno) {
+            if (isset($anno['From'])) {
+            }
+        }
         foreach ($parameters as $key => $value) {
             $keys[$key] = sprintf('%s = ?', $key);
             $values[] = $value;
         }
-        if ($keys) {
-            $sql = "SELECT * FROM %1\$s WHERE %2\$s";
-            $sql = sprintf(
-                $sql,
-                $this->identifier,
-                implode(' AND ', $keys)
-            );
-        } else {
-            $sql = "SELECT * FROM {$this->identifier}";
+        $fields = [];
+        foreach ($this->annotations['properties'] as $field => $anno) {
+            if ($field{0} == '_' || isset($anno['Private'])) {
+                continue;
+            }
+            if (!isset($anno['From'])) {
+                $fields[] = "$identifier.$field";
+            }
         }
+        $identifier .= $this->generateJoin($fields);
+        $sql = "SELECT %s FROM %s WHERE %s";
+        $sql = sprintf(
+            $sql,
+            implode(', ', $fields),
+            $identifier,
+            $keys ?  implode(' AND ', $keys) : '(1 = 1)'
+        );
         if (isset($opts['order'])) {
             $sql .= sprintf(
                 ' ORDER BY %s',
@@ -70,40 +84,111 @@ final class Pdo implements Adapter
         }
         $stmt = $this->getStatement($sql);
         $stmt->execute($values);
-        return $stmt->fetchAll(Base::FETCH_CLASS, get_class($object));
+        try {
+            $found = [];
+            $stmt->setFetchMode(Base::FETCH_INTO, clone $object);
+            while ($entry = $stmt->fetch()) {
+                $found[] = $entry;
+                $stmt->setFetchMode(Base::FETCH_INTO, clone $object);
+            }
+            return $found;
+        } catch (PDOException $e) {
+            return false;
+        }
     }
 
     /**
      * Load data into a single model.
      *
-     * @param object $model The original model.
      * @param Container $object A container object.
      * @return void
      * @throws Ornament\PrimaryKeyException if no primary key was set or could
      *  be determined, and loading would inevitably fail.
      */
-    public function load($model, Container $object)
+    public function load(Container $object)
     {
         $pks = [];
         $values = [];
+        $identifier = $this->identifier;
         foreach ($this->primaryKey as $key) {
             if (isset($object->$key)) {
-                $pks[$key] = sprintf('%s = ?', $key);
+                $pks[$key] = sprintf('%s.%s = ?', $identifier, $key);
                 $values[] = $object->$key;
             } else {
-                throw new PrimaryKeyException($model);
+                throw new PrimaryKeyException($object);
             }
         }
-        $sql = "SELECT * FROM %1\$s WHERE %2\$s";
+        $fields = [];
+        $joins = [];
+        foreach ($this->annotations['properties'] as $field => $anno) {
+            if ($field{0} == '_' || isset($anno['Private'])) {
+                continue;
+            }
+            if (!isset($anno['From'])) {
+                $fields[] = "$identifier.$field";
+            }
+        }
+        $identifier .= $this->generateJoin($fields);
+        $sql = "SELECT %s FROM %s WHERE %s";
         $stmt = $this->getStatement(sprintf(
             $sql,
-            $this->identifier,
+            implode(', ', $fields),
+            $identifier,
             implode(' AND ', $pks)
         ));
         $stmt->setFetchMode(Base::FETCH_INTO, $object);
         $stmt->execute($values);
         $stmt->fetch();
         $object->markClean();
+    }
+
+    /**
+     * Private helper to generate a JOIN statement.
+     *
+     * @param array $fields Array of fields to extend.
+     * @return string The JOIN statement to append to the query string.
+     */
+    private function generateJoin(array &$fields)
+    {
+        $annotations = $this->annotations['class'];
+        $props = $this->annotations['properties'];
+        $table = '';
+        foreach (['Require' => '', 'Include' => 'LEFT '] as $type => $join) {
+            if (isset($annotations[$type])) {
+                foreach ($annotations[$type] as $local => $joinCond) {
+                    // Hack to make the annotationParser recurse.
+                    $joinCond = AnnotationParser::getAnnotations(
+                        '/** @joinCond '.implode(', ', $joinCond).' */'
+                    )['joincond'];
+                    $table .= sprintf(
+                        ' %1$sJOIN %2$s ON ',
+                        $join,
+                        $local
+                    );
+                    $conds = [];
+                    foreach ($joinCond as $ref => $me) {
+                        $conds[] = sprintf(
+                            "%s.%s = %s.%s",
+                            $local,
+                            $ref,
+                            $this->identifier,
+                            $me
+                        );
+                    }
+                    $table .= implode(" AND ", $conds);
+                }
+            }
+        }
+        foreach ($props as $local => $anno) {
+            if (isset($anno['From'])) {
+                $fields[] = sprintf(
+                    '%s %s',
+                    $anno['From'],
+                    $local
+                );
+            }
+        }
+        return $table;
     }
 
     /**
@@ -132,7 +217,9 @@ final class Pdo implements Adapter
         $placeholders = [];
         $values = [];
         foreach ($this->fields as $field) {
-            if (isset($object->$field)) {
+            if (isset($object->$field)
+                && !isset($this->annotations['properties'][$field]['From'])
+            ) {
                 $placeholders[$field] = '?';
                 $values[] = $object->$field;
             }
