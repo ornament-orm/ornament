@@ -14,22 +14,27 @@ use InvalidArgumentException;
 trait Defaults
 {
     /**
-     * Stores the "parent" adapter, e.g. a PDO instance.
+     * @var Stores the "parent" adapter, e.g. a PDO instance.
      */
     private $adapter;
     /**
-     * Stores the identifier for this model (i.e., whatever name needs to be
-     * used when communicating with its backend storage, like a table name).
+     * @var Stores the identifier for this model (i.e., whatever name needs to
+     *  be used when communicating with its backend storage, like a table name).
      */
     private $identifier;
     /**
-     * The fields (properties) on the Model handled by this adapter.
+     * @var The fields (properties) on the Model handled by this adapter.
      */
-    private $fields;
+    private $fields = [];
     /**
-     * The fields to be considered primary keys a.k.a. unique identifiers.
+     * @var The fields to be considered primary keys a.k.a. unique identifiers.
      */
     private $primaryKey = [];
+    /**
+     * @var Private store for model annotations that might be needed during data
+     *  manipulation.
+     */
+    private $annotations = [];
 
     /**
      * Set the identifier to be used for this adapter.
@@ -65,6 +70,18 @@ trait Defaults
     public function setPrimaryKey($field)
     {
         $this->primaryKey = func_get_args();
+        return $this;
+    }
+
+    /**
+     * Set the annotations for this adapter.
+     *
+     * @param array $annotations
+     * @return self
+     */
+    public function setAnnotations(array $annotations)
+    {
+        $this->annotations = $annotations;
         return $this;
     }
 }
