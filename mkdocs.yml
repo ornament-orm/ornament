@@ -15,6 +15,13 @@ pages:
             -
                 'Getting data into your models': basic/loading.md
     -
+        Joining forces:
+            -
+                'Getting data from more than one source': joining/straight.md
+            -
+                'Cascading queries': joining/cascade.md
+
+    -
         Advanced:
             -
                 'Exporting JSON': advanced/json.md
