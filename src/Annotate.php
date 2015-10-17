@@ -8,15 +8,15 @@ use ReflectionClass;
 trait Annotate
 {
     /**
-     * Internal helper method to get this object's annotations. The annotations
-     * are cached for speed.
+     * Helper method to get this object's annotations. The annotations are
+     * cached for speed.
      *
      * @return array An array with `class`, `methods` and `properties` entries
      *  containing an Annotations object (for classes) or a hash of
      *  name/Annotations object pairs (for methods/properties).
      * @see zpt\anno\Annotations
      */
-    private function annotations()
+    public function annotations()
     {
         static $annotations;
         if (!isset($annotations)) {
