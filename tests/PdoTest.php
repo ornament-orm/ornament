@@ -1,58 +1,5 @@
 <?php
 
-use Ornament\Adapter;
-
-class MyTableModel
-{
-    use Ornament\Model;
-    use Ornament\Query;
-
-    /** @Private */
-    private $pdo;
-
-    public $id;
-    public $name;
-    public $comment;
-
-    public function __construct()
-    {
-        $this->pdo = $GLOBALS['pdo'];
-        $this->addAdapter(new Adapter\Pdo($this->pdo));
-    }
-}
-
-class LinkedTableModel
-{
-    use Ornament\Model;
-    use Ornament\Autoload;
-
-    /** @Private */
-    private $pdo;
-
-    public $id;
-    /**
-     * @Model MyTableModel
-     * @Constructor [ pdo ]
-     */
-    public $mytable;
-    public $points;
-
-    public function __construct()
-    {
-        $this->pdo = $GLOBALS['pdo'];
-        $this->addAdapter(new Adapter\Pdo($this->pdo));
-    }
-
-    public function getPercentage()
-    {
-        return round(($this->points / 5) * 100);
-    }
-
-    public function __index($index)
-    {
-    }
-}
-
 class PdoTest extends PHPUnit_Extensions_Database_TestCase
 {
     private static $pdo;
@@ -100,27 +47,10 @@ class PdoTest extends PHPUnit_Extensions_Database_TestCase
         $linked->percentage = 70;
     }
 
-    public function testAutoload()
-    {
-        $model = new MyTableModel(self::$pdo);
-        $model->name = 'Marijn';
-        $model->comment = 'Hi Ornament';
-        $model->save();
-        $linked = new LinkedTableModel(self::$pdo);
-        $linked->mytable = $model->id;
-        $linked->points = 4;
-        $linked->save();
-        unset($model, $linked);
-        $linked = new LinkedTableModel(self::$pdo);
-        $linked->id = 1;
-        $linked->load();
-        $this->assertEquals('MyTableModel', get_class($linked->mytable));
-    }
-
     public function testQuery()
     {
         $model = new MyTableModel(self::$pdo);
-        $list = $model->query([]);
+        $list = $model->query([], [], [self::$pdo]);
         $this->assertEquals(3, count($list));
         foreach ($list as $l) {
             $this->assertEquals('MyTableModel', get_class($l));
