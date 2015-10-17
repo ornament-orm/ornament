@@ -107,7 +107,7 @@ class Pdo implements Adapter
                 $pks[$key] = sprintf('%s.%s = ?', $identifier, $key);
                 $values[] = $object->$key;
             } else {
-                throw new Exception\PrimaryKey($object);
+                throw new Exception\PrimaryKey($identifier);
             }
         }
         $fields = $this->fields;
