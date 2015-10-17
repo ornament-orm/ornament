@@ -39,3 +39,27 @@ object of sorts (since you might want to do that in your own framework!).
 Ornament is a _toolkit_, so it supplies a number of `Trait`s one can `use` to
 extend your models' behaviour beyond the ordinary.
 
+The most basic implementation would look as follows:
+
+```php
+<?php
+
+use Ornament\Model;
+use Ornament\Adapter\Pdo;
+
+class MyModel
+{
+    use Model;
+
+    // Public properties on a Model are considered "handleable" by Ornament:
+    public $id;
+    public $name;
+    public $value;
+
+    public function __construct()
+    {
+        $this->addAdapter(new Pdo($GLOBALS['database']));
+    }
+}
+```
+
