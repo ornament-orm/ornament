@@ -20,4 +20,19 @@
             <value>A Byrd</value>
         </row>
     </table>
+    <table name="linked_table">
+        <column>id</column>
+        <column>mytable</column>
+        <column>points</column>
+    </table>
+    <table name="multijoin">
+        <column>id</column>
+        <column>mytable</column>
+        <column>linkedtable</column>
+        <row>
+            <value>1</value>
+            <value>2</value>
+            <value></value>
+        </row>
+    </table>
 </dataset>

@@ -15,3 +15,9 @@ CREATE TABLE bitflag (
     status INTEGER NOT NULL DEFAULT NULL
 );
 
+CREATE TABLE multijoin (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    mytable INTEGER NOT NULL REFERENCES my_table(id),
+    linkedtable INTEGER REFERENCES linked_table(id)
+);
+
