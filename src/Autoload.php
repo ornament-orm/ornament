@@ -29,7 +29,10 @@ trait Autoload
                     foreach ($maps as $field => $mapto) {
                         $model->$field = $this->$mapto;
                     }
-                    $model->load();
+                    try {
+                        $model->load();
+                    } catch (Exception\PrimaryKey $e) {
+                    }
                     $this->$property = $model;
                 } else {
                     $args = [];
