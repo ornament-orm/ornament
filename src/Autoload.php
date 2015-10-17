@@ -6,15 +6,10 @@ use ReflectionClass;
 
 trait Autoload
 {
-    /**
-     * @onLoad
-     */
+    /** @onLoad */
     public function autoload(array $annotations)
     {
         foreach ($annotations as $property => $anns) {
-            if (!isset($this->$property)) {
-                continue;
-            }
             if (isset($anns['Model'])) {
                 $class = $anns['Model'];
                 if (isset($anns['Mapping'])) {
