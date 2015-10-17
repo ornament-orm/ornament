@@ -10,9 +10,14 @@ use ReflectionProperty;
  */
 class Container
 {
+    /** @var Private Adapter storage. */
     private $adapter;
+    /** @var Private store for last check of model's state. */
     private $lastCheck = [];
 
+    /**
+     * Constructor. Initialize with the Adapter to use.
+     */
     public function __construct(Adapter $adapter)
     {
         $this->adapter = $adapter;
