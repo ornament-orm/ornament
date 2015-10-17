@@ -121,7 +121,8 @@ $user->status->nice = true;
 These calls accomplish the same as the manual getter/setter from the previous
 example, only in much less lines of code. Which is good, because we're lazy.
 
-A `Bitflag` can also be `__toString`ed yielding the underlying integer value.
+A `Bitflag` can also be `__toString`ed yielding the underlying integer value
+(obviously cast to a string value though).
 
 ## Example with other models (one-to-one or one-to-many relationships)
 Apart from the simplest of projects, you'll usually want to mix and match models
