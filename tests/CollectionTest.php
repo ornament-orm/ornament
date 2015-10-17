@@ -20,8 +20,14 @@ class DummyModel
 
 class Adapter implements Ornament\Adapter
 {
+    use Ornament\Adapter\Defaults;
+
     private $storage = [];
-    private $fields = ['id', 'name', 'comment'];
+
+    public function __construct()
+    {
+        $this->fields = ['id', 'name', 'comment'];
+    }
 
     public function query($model, array $parameters, array $opts = [], array $ctor = [])
     {
@@ -35,21 +41,6 @@ class Adapter implements Ornament\Adapter
             $ret[] = $model;
         }
         return $ret;
-    }
-
-    public function setIdentifier($identifier)
-    {
-        return $this;
-    }
-
-    public function setFields(array $fields)
-    {
-        return $this;
-    }
-
-    public function setPrimaryKey($field)
-    {
-        return $this;
     }
     
     public function load(Container $model)
