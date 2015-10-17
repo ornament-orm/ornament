@@ -16,25 +16,25 @@ trait Defaults
     /**
      * @var Stores the "parent" adapter, e.g. a PDO instance.
      */
-    private $adapter;
+    protected $adapter;
     /**
      * @var Stores the identifier for this model (i.e., whatever name needs to
      *  be used when communicating with its backend storage, like a table name).
      */
-    private $identifier;
+    protected $identifier;
     /**
      * @var The fields (properties) on the Model handled by this adapter.
      */
-    private $fields = [];
+    protected $fields = [];
     /**
      * @var The fields to be considered primary keys a.k.a. unique identifiers.
      */
-    private $primaryKey = [];
+    protected $primaryKey = [];
     /**
      * @var Private store for model annotations that might be needed during data
      *  manipulation.
      */
-    private $annotations = [];
+    protected $annotations = [];
 
     /**
      * Set the identifier to be used for this adapter.
