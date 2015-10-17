@@ -50,6 +50,9 @@ class Pdo implements Adapter
             $values[] = $value;
         }
         $fields = $this->fields;
+        foreach ($fields as &$field) {
+            $field = "$identifier.$field";
+        }
         $identifier .= $this->generateJoin($fields);
         $sql = "SELECT %s FROM %s WHERE %s";
         $sql = sprintf(
