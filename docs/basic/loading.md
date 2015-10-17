@@ -10,18 +10,16 @@ can utilise that to facilitate a form of autoloading.
 ```php
 <?php
 
-use Ornament\Pdo;
-
 class SimpleModel
 {
-    use Pdo;
+    use Ornament\Model;
 
     public $id;
     public $foo;
 
     public function __construct(PDO $pdo)
     {
-        $this->addPdoAdapter($pdo);
+        $this->addAdapter(new Ornament\Adapter\Pdo($pdo));
     }
 }
 

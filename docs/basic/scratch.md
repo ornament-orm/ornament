@@ -135,11 +135,9 @@ Let's simplify `MyModel` even further:
 ```php
 <?php
 
-use Ornament\Pdo;
-
 class MyModel
 {
-    use Pdo;
+    use Ornament\Model;
 
     public $id;
     public $name;
@@ -158,7 +156,7 @@ class MyModel
             ));
             return trim($table, '_');
         });
-        $this->addPdoAdapter($pdo);
+        $this->addAdapter(new Ornament\Adapter\Pdo($pdo));
     }
 }
 ```

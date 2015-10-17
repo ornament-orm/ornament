@@ -30,7 +30,7 @@ class ItemModel
 
     public function __construct(PDO $pdo)
     {
-        $this->addAdapter($pdo);
+        $this->addAdapter(new Ornament\Adapter\Pdo($pdo));
     }
 }
 
@@ -43,7 +43,7 @@ class ImageModel
 
     public function __construct(PDO $pdo)
     {
-        $this->addAdapter($pdo);
+        $this->addAdapter(new Ornament\Adapter\Pdo($pdo));
     }
 }
 
@@ -121,13 +121,15 @@ for you).
 
 class ImageModel
 {
+    use Ornament\Model;
+
     public $id;
     public $url;
     public $position;
 
     public function __construct(PDO $pdo)
     {
-        $this->addPdoAdapter($pdo);
+        $this->addAdapter(new Ornament\Adapter\Pdo($pdo));
     }
 
     public function __index($index)
