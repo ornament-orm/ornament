@@ -54,3 +54,9 @@ generate a `LEFT JOIN session ON session.user = user.id`.
 
 > To generate a straight `JOIN` use `@Require` instead of `@Include`.
 
+You'll have noticed that the concept of "joining" is pretty specific to certain
+storage engines. E.g. an API probably won't support that. That is fine;
+implementing adapters should use their own logic to accomplish the same
+behaviour. E.g. an adapter for an API could issue multiple calls and
+programmatically merge the results.
+
