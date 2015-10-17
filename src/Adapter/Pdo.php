@@ -4,6 +4,7 @@ namespace Ornament\Adapter;
 
 use Ornament\Adapter;
 use Ornament\Container;
+use Ornament\Exception;
 use PDO as Base;
 use PDOException;
 use zpt\anno\Annotations;
@@ -93,7 +94,7 @@ class Pdo implements Adapter
      *
      * @param Container $object A container object.
      * @return void
-     * @throws Ornament\PrimaryKeyException if no primary key was set or could
+     * @throws Ornament\Exception\PrimaryKey if no primary key was set or could
      *  be determined, and loading would inevitably fail.
      */
     public function load(Container $object)
@@ -106,7 +107,7 @@ class Pdo implements Adapter
                 $pks[$key] = sprintf('%s.%s = ?', $identifier, $key);
                 $values[] = $object->$key;
             } else {
-                throw new PrimaryKeyException($object);
+                throw new Exception\PrimaryKey($object);
             }
         }
         $fields = $this->fields;
