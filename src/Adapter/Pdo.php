@@ -49,15 +49,7 @@ class Pdo implements Adapter
             $keys[$key] = sprintf('%s = ?', $key);
             $values[] = $value;
         }
-        $fields = [];
-        foreach ($this->annotations['properties'] as $field => $anno) {
-            if ($field{0} == '_' || isset($anno['Private'])) {
-                continue;
-            }
-            if (!isset($anno['From'])) {
-                $fields[] = "$identifier.$field";
-            }
-        }
+        $fields = $this->fields;
         $identifier .= $this->generateJoin($fields);
         $sql = "SELECT %s FROM %s WHERE %s";
         $sql = sprintf(
@@ -188,12 +180,12 @@ class Pdo implements Adapter
     }
 
     /**
-     * Private helper to either get or create a PDOStatement.
+     * Protected helper to either get or create a PDOStatement.
      *
      * @param string $sql SQL to prepare the statement with.
      * @return PDOStatement A PDOStatement.
      */
-    private function getStatement($sql)
+    protected function getStatement($sql)
     {
         if (!isset($this->statements[$sql])) {
             $this->statements[$sql] = $this->adapter->prepare($sql);
