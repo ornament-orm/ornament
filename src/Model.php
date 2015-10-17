@@ -74,9 +74,15 @@ trait Model
             }
         }
         $pk = [];
-        foreach ($annotations as $prop => $anno) {
+        foreach ($annotations['properties'] as $prop => $anno) {
             if (isset($anno['PrimaryKey'])) {
                 $pk[] = $prop;
+            }
+            if (isset($anno['Bitflag'])) {
+                $this->$prop = new Bitflag(
+                    $this->$prop,
+                    $anno['Bitflag']
+                );
             }
         }
         if (!$pk && in_array('id', $fields)) {
@@ -85,15 +91,9 @@ trait Model
         if ($pk) {
             call_user_func_array([$adapter, 'setPrimaryKey'], $pk);
         }
-        foreach ($this->annotations()['properties'] as $prop => $annotations) {
-            if (isset($annotations['Bitflag'])) {
-                $this->$prop = new Bitflag(
-                    $this->$prop,
-                    $annotations['Bitflag']
-                );
-            }
-        }
-        $adapter->setIdentifier($id)->setFields($fields);
+        $adapter->setIdentifier($id)
+                ->setFields($fields)
+                ->setAnnotations($annotations);
         $model = new Container($adapter);
         $new = true;
         foreach ($fields as $field => $alias) {
@@ -122,7 +122,7 @@ trait Model
      * Optionally also calls methods annotated with `onLoad`.
      *
      * @param bool $includeBase If set to true, loads the base model; if false,
-     *                          only (re)loads linked models. Defaults to true.
+     *  only (re)loads linked models. Defaults to true.
      * @return void
      */
     public function load($includeBase = true)
@@ -135,7 +135,7 @@ trait Model
             }
         }
         foreach ($annotations['methods'] as $method => $anns) {
-            if (isset($anns['onLoad']) && $anns['onLoad']) {
+            if (isset($anns['onLoad'])) {
                 $this->$method($annotations['properties']);
             }
         }
