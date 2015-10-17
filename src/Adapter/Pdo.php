@@ -128,12 +128,12 @@ class Pdo implements Adapter
     }
 
     /**
-     * Private helper to generate a JOIN statement.
+     * Internal helper to generate a JOIN statement.
      *
      * @param array $fields Array of fields to extend.
      * @return string The JOIN statement to append to the query string.
      */
-    private function generateJoin(array &$fields)
+    protected function generateJoin(array &$fields)
     {
         $annotations = $this->annotations['class'];
         $props = $this->annotations['properties'];
