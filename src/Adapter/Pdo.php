@@ -38,10 +38,11 @@ class Pdo implements Adapter
      *  ['id' => 1].
      * @param array $opts Hash of options. Supported keys are 'limit',
      *  'offset' and 'order' and they correspond to their SQL equivalents.
+     * @param array $ctor Optional constructor arguments.
      * @return array|false An array of objects of the same class as $object, or
      *  false on query failure.
      */
-    public function query($object, array $parameters, array $opts = [])
+    public function query($object, array $parameters, array $opts = [], array $ctor = [])
     {
         $keys = [];
         $values = [];
@@ -75,15 +76,10 @@ class Pdo implements Adapter
             $sql .= sprintf(' OFFSET %d', $opts['offset']);
         }
         $stmt = $this->getStatement($sql);
-        $stmt->execute($values);
         try {
-            $found = [];
-            $stmt->setFetchMode(Base::FETCH_INTO, clone $object);
-            while ($entry = $stmt->fetch()) {
-                $found[] = $entry;
-                $stmt->setFetchMode(Base::FETCH_INTO, clone $object);
-            }
-            return $found;
+            $stmt->execute($values);
+            $stmt->setFetchMode(Base::FETCH_CLASS, get_class($object), $ctor);
+            return $stmt->fetchAll();
         } catch (PDOException $e) {
             return false;
         }
