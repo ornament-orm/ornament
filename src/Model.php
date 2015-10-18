@@ -56,7 +56,7 @@ trait Model
             $fields = [];
             foreach ($annotations['properties'] as $prop => $anno) {
                 if ($prop{0} != '_'
-                    && !isset($anno['Virtual'])
+                    && !(isset($anno['Virtual']) && !isset($anno['From']))
                     && !isset($anno['Private'])
                     && !is_array($this->$prop)
                 ) {
