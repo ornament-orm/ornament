@@ -53,7 +53,7 @@ trait Query
     {
         if ($res = self::query($where, $opts, $ctor)) {
             foreach ($res as $result) {
-                $result->load();
+                $result->load(false);
                 return $result;
             }
         }
