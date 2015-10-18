@@ -25,7 +25,10 @@ trait Autoload
                 }
                 $ref = new ReflectionClass($class);
                 $model = $ref->newInstanceArgs($ctorargs);
-                if (!is_array($this->$property)) {
+                if (!(is_array($this->$property)
+                    || is_object($this->$property)
+                        and $this->$property instanceof Collection
+                )) {
                     foreach ($maps as $field => $mapto) {
                         $model->$field = $this->$mapto;
                     }
