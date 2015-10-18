@@ -31,11 +31,12 @@ class Container
      * @param array $parameters Key/value pair of parameters to query on (e.g.,
      *                          ['parent' => 1]).
      * @param array $opts Optional hash of options.
+     * @param array $ctor Optional contructor arguments.
      * @return array Array of models of the same type as $parent.
      */
-    public function query($parent, array $parameters, array $opts = [])
+    public function query($parent, array $parameters, array $opts = [], array $ctor = [])
     {
-        return $this->adapter->query($parent, $parameters, $opts);
+        return $this->adapter->query($parent, $parameters, $opts, $ctor);
     }
 
     /**
