@@ -86,3 +86,4 @@ trait Query
         return $cached;
     }
 }
+
