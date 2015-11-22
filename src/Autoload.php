@@ -42,7 +42,8 @@ trait Autoload
                     foreach ($maps as $key => $arg) {
                         $args[$key] = $this->$arg;
                     }
-                    $this->$property = $class::query($args);
+                    $options = isset($anns['Options']) ? $anns['Options'] : [];
+                    $this->$property = $class::query($args, $options);
                 }
             }
         }
