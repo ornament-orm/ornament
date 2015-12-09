@@ -43,7 +43,9 @@ trait Autoload
                         $args[$key] = $this->$arg;
                     }
                     $options = isset($anns['Options']) ? $anns['Options'] : [];
-                    $this->$property = $class::query($args, $options);
+                    $collection = $class::query($args, $options);
+                    $this->$property = $collection ?:
+                        new Collection([], $this, $maps);
                 }
             }
         }
