@@ -239,8 +239,12 @@ class Pdo implements Adapter
         $placeholders = [];
         $values = [];
         foreach ($this->fields as $field) {
-            $placeholders[$field] = sprintf('%s = ?', $field);
-            $values[] = $object->$field;
+            if (isset($object->$field)
+                && !isset($this->annotations['properties'][$field]['From'])
+            ) {
+                $placeholders[$field] = sprintf('%s = ?', $field);
+                $values[] = $object->$field;
+            }
         }
         $primaries = [];
         foreach ($this->primaryKey as $key) {
