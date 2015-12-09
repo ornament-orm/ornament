@@ -26,8 +26,8 @@ trait Query
      * @param mixed $where Something your adapter can use as a filter.
      * @param array $opts Key/value pair of options.
      * @param array $ctor Optional constructor arguments.
-     * @return Ornament\Collection An Ornament\Collection of models found (which
-     *                             might be empty of course) of type __CLASS__.
+     * @return Ornament\Collection|null An Ornament\Collection of models found
+     *  of course) of type __CLASS__, or null if nothing matched.
      */
     public static function query($where, array $opts = [], array $ctor = [])
     {
@@ -40,6 +40,7 @@ trait Query
                 return new Collection($result);
             }
         }
+        return null;
     }
 
     /**
