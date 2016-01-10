@@ -64,7 +64,6 @@ trait Virtual
             }
         }
         if (!isset($this->__adapters)) {
-            echo 'setting';
             $this->$prop = $value;
             return;
         }
