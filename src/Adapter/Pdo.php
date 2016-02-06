@@ -200,7 +200,7 @@ class Pdo implements Adapter
         $placeholders = [];
         $values = [];
         foreach ($this->fields as $field) {
-            if (isset($object->$field)
+            if (property_exists($object, $field)
                 && !isset($this->annotations['properties'][$field]['From'])
             ) {
                 $placeholders[$field] = '?';
@@ -239,7 +239,7 @@ class Pdo implements Adapter
         $placeholders = [];
         $values = [];
         foreach ($this->fields as $field) {
-            if (isset($object->$field)
+            if (property_exists($object, $field)
                 && !isset($this->annotations['properties'][$field]['From'])
             ) {
                 $placeholders[$field] = sprintf('%s = ?', $field);
