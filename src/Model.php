@@ -139,6 +139,14 @@ trait Model
                 $this->$method($annotations['properties']);
             }
         }
+        foreach ($annotations['properties'] as $prop => $anns) {
+            if (isset($anns['Bitflag'])) {
+                $this->$prop = new Bitflag(
+                    (int)("{$this->$prop}"),
+                    $anns['Bitflag']
+                );
+            }
+        }
     }
     
     /**
