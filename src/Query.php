@@ -77,9 +77,6 @@ trait Query
         static $cached;
         if (!isset($cached)) {
             $class = new ReflectionClass(get_called_class());
-            while ($class->isAbstract()) {
-                $class = $class->getParentClass();
-            }
             $cached = $class->newInstanceArgs($ctor);
         }
         return $cached;
