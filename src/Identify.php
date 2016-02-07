@@ -2,6 +2,8 @@
 
 namespace Ornament;
 
+use ReflectionClass;
+
 /**
  * Helper trait to guesstimate the identifier (table name, API endpoint etc.)
  * for a given model. Mostly useful for PDO-like adapters, but theoretically
@@ -32,7 +34,11 @@ trait Identify
                 return Helper::normalize($class);
             };
         }
-        return $guesser(get_class($this));
+        $class = get_class($this);
+        if (strpos($class, '@anonymous') !== false) {
+            $class = (new ReflectionClass($this))->getParentClass()->name;
+        }
+        return $guesser($class);
     }
 }
 
