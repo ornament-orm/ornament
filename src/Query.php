@@ -76,7 +76,7 @@ trait Query
     {
         static $cached;
         if (!isset($cached)) {
-            $class = new ReflectionClass(__CLASS__);
+            $class = new ReflectionClass(get_called_class());
             while ($class->isAbstract()) {
                 $class = $class->getParentClass();
             }
