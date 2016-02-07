@@ -20,7 +20,12 @@ trait Annotate
     {
         static $annotations;
         if (!isset($annotations)) {
-            $reflector = new ReflectionClass($this);
+            $annotator = get_class($this);
+            if (strpos($annotator, '@anonymous')) {
+                $annotator = (new ReflectionClass($this))
+                    ->getParentClass()->name;
+            }
+            $reflector = new ReflectionClass($annotator);
             $annotations['class'] = new Annotations($reflector);
             $annotations['methods'] = [];
             foreach ($reflector->getMethods() as $method) {
