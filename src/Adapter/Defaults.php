@@ -84,5 +84,41 @@ trait Defaults
         $this->annotations = $annotations;
         return $this;
     }
+
+    /**
+     * Internal helper to "flatten" all values associated with an operation.
+     * This is mainly useful for being able to store models on foreign keys and
+     * automatically "flatten" them to the associated key during saving.
+     *
+     * @param array &$values The array of values to flatten.
+     */
+    protected function flattenValues(&$values)
+    {
+        array_walk($values, function (&$value) {
+            if ($this->isOrnamentModel($value)) {
+                $value = $value->getPrimaryKey();
+                if (is_array($value)) {
+                    $value = '('.implode(', ', $value).')';
+                }
+            }
+        });
+    }
+
+    /**
+     * Quick and dirty check to see if a value seems like an Ornament model.
+     *
+     * @param mixed $value The value to check.
+     * @return bool True if it seems a model, else false.
+     */
+    public function isOrnamentModel($value)
+    {
+        if (!is_object($value)) {
+            return false;
+        }
+        if (method_exists($value, 'getPrimaryKey')) {
+            return true;
+        }
+        return false;
+    }
 }
 
