@@ -207,6 +207,7 @@ class Pdo implements Adapter
                 $values[] = $object->$field;
             }
         }
+        $this->flattenValues($values);
         $sql = sprintf(
             $sql,
             $this->identifier,
@@ -246,6 +247,7 @@ class Pdo implements Adapter
                 $values[] = $object->$field;
             }
         }
+        $this->flattenValues($values);
         $primaries = [];
         foreach ($this->primaryKey as $key) {
             $primaries[] = sprintf('%s = ?', $key);
