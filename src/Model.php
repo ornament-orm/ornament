@@ -11,15 +11,24 @@ trait Model
     use Identify;
 
     /**
+     * @var array
      * Private storage of registered adapters for this model.
      * @Private
      */
     private $__adapters;
+
     /**
+     * @var string
      * Private storage of model's current state.
      * @Private
      */
     private $__state = 'new';
+
+    /**
+     * @var array
+     * Private storage of the model's primary key(s).
+     */
+    private $__primaryKeys;
 
     /**
      * Register the specified adapter for the given identifier and fields.
@@ -89,6 +98,7 @@ trait Model
             $pk[] = 'id';
         }
         if ($pk) {
+            $this->__primaryKeys = $pk;
             call_user_func_array([$adapter, 'setPrimaryKey'], $pk);
         }
         $adapter->setIdentifier($id)
@@ -115,6 +125,32 @@ trait Model
             }
         }
         return $adapter;
+    }
+
+    /**
+     * Get the primary key(s) for this model.
+     *
+     * @return mixed Either the scalar single primary key, or an array of scalar
+     *  values if the model has multiple fields defined as the primary key.
+     */
+    public function getPrimaryKey()
+    {
+        $pks = [];
+        foreach ($this->__primaryKeys as $pk) {
+            if (is_object($this->$pk)) {
+                $traits = class_uses($this->$pk);
+                if (isset($traits['Ornament\Model'])
+                    || isset($traits['Ornament\JsonModel'])
+                ) {
+                    $pks[] = $this->$pk->getPrimaryKey();
+                } else {
+                    $pks[] = "{$this->$pk}";
+                }
+            } else {
+                $pks[] = $this->$pk;
+            }
+        }
+        return count($pks) == 1 ? $pks[0] : $pks;
     }
 
     /**
