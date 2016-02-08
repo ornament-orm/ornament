@@ -20,6 +20,7 @@ use StdClass;
  * var_dump($model->status->on); // true or false, depending
  * $model->status->on = true; // bit 1 is now on (status |= 1)
  * $model->status->on = false; // bit 1 is now off (status &= ~1)
+ * </code>
  */
 class Bitflag implements JsonSerializable
 {
@@ -39,7 +40,7 @@ class Bitflag implements JsonSerializable
      */
     public function __construct($source, array $valueMap = [])
     {
-        $this->source = $source;
+        $this->source = (int)"$source";
         $this->map = $valueMap;
     }
 
