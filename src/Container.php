@@ -82,7 +82,18 @@ class Container
         $exported = new StdClass;
         foreach ($this as $name => $field) {
             if ((new ReflectionProperty($this, $name))->isPublic()) {
-                $exported->$name = "$field";
+                if (is_object($field)) {
+                    $traits = class_uses($field);
+                    if (isset($traits['Ornament\Model'])
+                        || isset($traits['Ornament\JsonModel'])
+                    ) {
+                        $exported->$name = $field->getPrimaryKey();
+                    } else {
+                        $exported->$name = "$field";
+                    }
+                } else {
+                    $exported->$name = $field;
+                }
             }
         }
         return $exported;
