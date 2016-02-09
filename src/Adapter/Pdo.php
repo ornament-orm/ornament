@@ -104,7 +104,7 @@ class Pdo implements Adapter
     public function load(Container $object)
     {
         $pks = [];
-        $values = [];
+        $values = $this->parameters;
         $identifier = $this->identifier;
         foreach ($this->primaryKey as $key) {
             if (isset($object->$key)) {
