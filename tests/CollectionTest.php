@@ -29,6 +29,10 @@ class Adapter implements Ornament\Adapter
         $this->fields = ['id', 'name', 'comment'];
     }
 
+    public function setAdditionalQueryParameters(array $parameters)
+    {
+    }
+
     public function query($model, array $parameters, array $opts = [], array $ctor = [])
     {
         $ret = [];
