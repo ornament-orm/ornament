@@ -17,8 +17,11 @@ class Pdo implements Adapter
 {
     use Defaults;
 
-    /** @var Private statement cache. */
+    /** @var array Private statement cache. */
     private $statements = [];
+
+    /** @var array Additional query parameters. */
+    protected $parameters = [];
 
     /**
      * Constructor. Pass in the adapter (instanceof PDO) as an argument.
@@ -28,6 +31,11 @@ class Pdo implements Adapter
     public function __construct(Base $adapter)
     {
         $this->adapter = $adapter;
+    }
+
+    public function setAdditionalQueryParameters(array $parameters)
+    {
+        $this->parameters = $parameters;
     }
 
     /**
@@ -45,7 +53,7 @@ class Pdo implements Adapter
     public function query($object, array $parameters, array $opts = [], array $ctor = [])
     {
         $keys = [];
-        $values = [];
+        $values = $this->parameters;
         $identifier = $this->identifier;
         foreach ($parameters as $key => $value) {
             $keys[$key] = sprintf('%s = ?', $key);
@@ -149,13 +157,21 @@ class Pdo implements Adapter
                     );
                     $conds = [];
                     foreach ($joinCond as $ref => $me) {
-                        $conds[] = sprintf(
-                            "%s.%s = %s.%s",
-                            $local,
-                            $ref,
-                            $this->identifier,
-                            $me
-                        );
+                        if ($me == '?') {
+                            $conds[] = sprintf(
+                                "%s.%s = $me",
+                                $local,
+                                $ref
+                            );
+                        } else {
+                            $conds[] = sprintf(
+                                "%s.%s = %s.%s",
+                                $local,
+                                $ref,
+                                $this->identifier,
+                                $me
+                            );
+                        }
                     }
                     $table .= implode(" AND ", $conds);
                 }
