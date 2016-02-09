@@ -26,7 +26,7 @@ CREATE TABLE session (
 What we'd like to do here is a query of the following sort:
 
 ```sql
-SELECT u.*, s.id sessid FROM user u LEFT JOIN session s ON s.user = u.id
+SELECT user.*, session.id sessid FROM user LEFT JOIN session ON user = user.id
 ```
 
 Let's write a simple model for that which shows how we can instruct Ornament to
@@ -59,4 +59,47 @@ storage engines. E.g. an API probably won't support that. That is fine;
 implementing adapters should use their own logic to accomplish the same
 behaviour. E.g. an adapter for an API could issue multiple calls and
 programmatically merge the results.
+
+## Passing parameters
+Sometimes you need to join data from multiple sources where not all parameters
+can be inferred. E.g., in the preceding example we might only want `$sessid` to
+be included if the _currently logged in user_ matches. SQL-wise that would mean
+a query like the following:
+
+```sql
+-- If the currently logged in user has id "1":
+SELECT user.*, session.id sessid FROM user LEFT JOIN session ON user = '1'
+```
+
+In other words, we need to programmatically inject a value into our query. Since
+Ornament 0.7 this is possible via the `setAdditionalQueryParameters` on
+adapters, combined with using `"?"` as a placeholder in the `@Include`
+definition instead of a mapped field name:
+
+```php
+<?php
+
+/** @Include session = [user = ?] */
+class UserModel
+{
+    use Ornament\Model;
+
+    public $id;
+    /** @From session.id */
+    public $sessid;
+
+    // etc.
+
+    public function __construct()
+    {
+        // etc.
+        $this->addAdapter(new Ornament\Adapter\Pdo($myPdoObject))
+            ->setAdditionalQueryParameters([$userid]);
+    }
+}
+```
+
+Each `"?"` is replaced by an item in the array argument to the method. Non-`PDO`
+adapters should do their own search and replace (for `PDO` adapters the question
+mark simply binds values to a prepared statement).
 
