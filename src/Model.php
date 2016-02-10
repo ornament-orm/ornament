@@ -185,6 +185,11 @@ trait Model
         }
     }
 
+    /**
+     * Returns true if any of the associated containers is new.
+     *
+     * @return bool
+     */
     public function isNew()
     {
         foreach ($this->__adapters as $model) {
@@ -195,6 +200,11 @@ trait Model
         return false;
     }
 
+    /**
+     * Returns true if any of the associated containers is dirty.
+     *
+     * @return bool
+     */
     public function isDirty()
     {
         foreach ($this->__adapters as $model) {
