@@ -184,6 +184,26 @@ trait Model
             }
         }
     }
+
+    public function isNew()
+    {
+        foreach ($this->__adapters as $model) {
+            if ($model->isNew()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public function isDirty()
+    {
+        foreach ($this->__adapters as $model) {
+            if ($model->isDirty()) {
+                return true;
+            }
+        }
+        return false;
+    }
     
     /**
      * Persists the model back to storage based on the specified adapters.
