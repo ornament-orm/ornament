@@ -56,6 +56,9 @@ class Pdo implements Adapter
         $values = $this->parameters;
         $identifier = $this->identifier;
         foreach ($parameters as $key => $value) {
+            if (!strpos($key, '.')) {
+                $key = "$identifier.$key";
+            }
             $keys[$key] = sprintf('%s = ?', $key);
             $values[] = $value;
         }
@@ -146,6 +149,10 @@ class Pdo implements Adapter
         foreach (['Require' => '', 'Include' => 'LEFT '] as $type => $join) {
             if (isset($annotations[$type])) {
                 foreach ($annotations[$type] as $local => $joinCond) {
+                    if (is_numeric($local)) {
+                        foreach ($joinCond as $local => $joinCond) {
+                        }
+                    }
                     // Hack to make the annotationParser recurse.
                     $joinCond = AnnotationParser::getAnnotations(
                         '/** @joinCond '.implode(', ', $joinCond).' */'
