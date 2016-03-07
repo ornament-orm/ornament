@@ -238,7 +238,11 @@ class Pdo implements Adapter
             implode(', ', $placeholders)
         );
         $stmt = $this->getStatement($sql);
-        $retval = $stmt->execute($values);
+        try {
+            $retval = $stmt->execute($values);
+        } catch (PDOException $e) {
+            return false;
+        }
         if (count($this->primaryKey) == 1) {
             $pk = $this->primaryKey[0];
             try {
@@ -283,9 +287,13 @@ class Pdo implements Adapter
             implode(' AND ', $primaries)
         );
         $stmt = $this->getStatement($sql);
-        $retval = $stmt->execute($values);
-        $this->load($object);
-        return $retval;
+        try {
+            $retval = $stmt->execute($values);
+            $this->load($object);
+            return $retval;
+        } catch (PDOException $e) {
+            return false;
+        }
     }
 
     /**
@@ -308,8 +316,12 @@ class Pdo implements Adapter
             implode(' AND ', $primaries)
         );
         $stmt = $this->getStatement($sql);
-        $retval = $stmt->execute($values);
-        return $retval;
+        try {
+            $retval = $stmt->execute($values);
+            return $retval;
+        } catch (PDOException $e) {
+            return false;
+        }
     }
 }
 
