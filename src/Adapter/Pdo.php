@@ -225,6 +225,7 @@ class Pdo implements Adapter
         foreach ($this->fields as $field) {
             if (property_exists($object, $field)
                 && !isset($this->annotations['properties'][$field]['From'])
+                && isset($object->$field)
             ) {
                 $placeholders[$field] = '?';
                 $values[] = $object->$field;
