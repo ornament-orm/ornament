@@ -214,6 +214,20 @@ trait Model
         }
         return false;
     }
+
+    /**
+     * Returns true if a specific property on the model is dirty.
+     *
+     * @return bool
+     */
+    public function isModified($property)
+    {
+        foreach ($this->__adapters as $model) {
+            if (property_exists($model, $property)) {
+                return $model->isModified($property);
+            }
+        }
+    }
     
     /**
      * Persists the model back to storage based on the specified adapters.
