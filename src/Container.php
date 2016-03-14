@@ -158,5 +158,17 @@ class Container
     {
         return $this->lastCheck != $this->export();
     }
+
+    /**
+     * Checks if a specific property is "dirty" compared to the last known
+     * "clean" state.
+     *
+     * @param string $property The name of the property to check.
+     * @return boolean true if dirty, otherwise false.
+     */
+    public function isModified($property)
+    {
+        return $this->lastCheck[$property] != $this->$property;
+    }
 }
 
