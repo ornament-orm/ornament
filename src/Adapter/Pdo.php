@@ -271,8 +271,12 @@ class Pdo implements Adapter
             if (property_exists($object, $field)
                 && !isset($this->annotations['properties'][$field]['From'])
             ) {
-                $placeholders[$field] = sprintf('%s = ?', $field);
-                $values[] = $object->$field;
+                if (!is_null($object->$field)) {
+                    $placeholders[$field] = sprintf('%s = ?', $field);
+                    $values[] = $object->$field;
+                } else {
+                    $placeholders[$field] = "$field = NULL";
+                }
             }
         }
         $this->flattenValues($values);
