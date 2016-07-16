@@ -1,5 +1,5 @@
 {
-    "name": "monomelodies/ornament",
+    "name": "ornament/ornament",
     "description": "PHP5 ORM toolkit",
     "license": "MIT",
     "keywords": ["php","orm"],
@@ -18,13 +18,13 @@
         "phpunit/dbunit": ">=1.2"
     },
     "suggest": {
-        "monomelodies/dabble": "PDO-based database abstraction layer",
+        "monolyth/dabble": "PDO-based database abstraction layer",
         "monomelodies/dormant": "Dabble-specific Ornament adapter",
-        "monomelodies/formulaic": "PHP5 OO-forms with data binding for (Ornament) models"
+        "monolyth/formulaic": "PHP5 OO-forms with data binding for (Ornament) models"
     },
     "autoload": {
         "psr-4": {
-            "Ornament\\": "src/"
+            "Ornament\\Ornament\\": "src/"
         }
     }
 }
