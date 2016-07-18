@@ -13,7 +13,7 @@ use StdClass;
  * makes this easy.
  *
  * Annotate the bitflag property with @Bitflag followed by a map of names/flags,
- * e.g. @Bitglag on = 1, valid = 2
+ * e.g. @Bitflag on = 1, valid = 2
  *
  * <code>
  * // Now this works, assuming `$model` is the instance:
