@@ -14,8 +14,7 @@
         "zeptech/annotations": "^1.1"
     },
     "require-dev": {
-        "phpunit/phpunit": ">=4.0",
-        "phpunit/dbunit": ">=1.2"
+        "gentry/gentry": "^0.10.0"
     },
     "suggest": {
         "monolyth/dabble": "PDO-based database abstraction layer",
@@ -24,7 +23,14 @@
     },
     "autoload": {
         "psr-4": {
-            "Ornament\\Ornament\\": "src/"
+            "Ornament\\Ornament\\": "src/",
+            "Ornament\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Ornament\\Ornament\\Tests\\": "tests/",
+            "Ornament\\Ornament\\Demo\\": "demo/"
         }
     }
 }
