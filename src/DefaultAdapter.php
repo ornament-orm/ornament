@@ -40,6 +40,23 @@ abstract class DefaultAdapter implements Adapter
     protected $annotations = [];
 
     /**
+     * Guess the identifier for a model based on a callback.
+     */
+    public function guessIdentifier(callable $fn = null)
+    {
+        $class = get_class($this);
+        if (strpos($class, '@anonymous') !== false) {
+            $class = (new ReflectionClass($this))->getParentClass()->name;
+        }
+        if (!isset($fn)) {
+            $fn = function ($class) {
+                return $class;
+            };
+        }
+        return $fn($class);
+    }
+
+    /**
      * Set the identifier to be used for this adapter.
      *
      * @param string $identifier An identifier (table name, API endpoint etc.)
