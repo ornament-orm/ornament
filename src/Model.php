@@ -189,6 +189,10 @@ trait Model
             return $this->$method($value);
         }
         $modified = false;
+        if (!isset($this->__sources)) {
+            $this->__new = false;
+            return;
+        }
         foreach ($this->__sources as $source) {
             if (property_exists($source, $prop)) {
                 $val = $value;
