@@ -106,19 +106,19 @@ trait Model
         }
         if (!isset($this->__state)) {
             $this->__state = new StdClass;
-        }
-        if ($this->__sources->contains($this->__state)) {
-            $this->__sources->detach($this->__state);
-        }
-        foreach ($properties as $property) {
-            $name = $property->name;
-            $this->__state->$name = null;
-        }
-        $this->__sources->attach($this->__state);
-        foreach ($properties as $property) {
-            $name = $property->name;
-            $this->__state->$name = $this->$name;
-            unset($this->$name);
+            if ($this->__sources->contains($this->__state)) {
+                $this->__sources->detach($this->__state);
+            }
+            foreach ($properties as $property) {
+                $name = $property->name;
+                $this->__state->$name = null;
+            }
+            $this->__sources->attach($this->__state);
+            foreach ($properties as $property) {
+                $name = $property->name;
+                $this->__state->$name = $this->$name;
+                unset($this->$name);
+            }
         }
         if ($return && isset($$return)) {
             return $$return;
