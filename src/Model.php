@@ -51,7 +51,7 @@ trait Model
      */
     private static $__decoratorMethods = [];
 
-    protected function ornamentalize()
+    public function ornamentalize($return = null)
     {
         static $reflection;
         static $properties;
@@ -112,10 +112,17 @@ trait Model
         }
         foreach ($properties as $property) {
             $name = $property->name;
+            $this->__state->$name = null;
+        }
+        $this->__sources->attach($this->__state);
+        foreach ($properties as $property) {
+            $name = $property->name;
             $this->__state->$name = $this->$name;
             unset($this->$name);
         }
-        $this->__sources->attach($this->__state);
+        if ($return && isset($$return)) {
+            return $$return;
+        }
     }
 
     /**
@@ -186,7 +193,8 @@ trait Model
             $prop
         ));
         if (method_exists($this, $method)) {
-            return $this->$method($value);
+            $this->$method($value);
+            return;
         }
         $modified = false;
         if (!isset($this->__sources)) {
