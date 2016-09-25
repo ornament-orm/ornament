@@ -5,52 +5,123 @@ namespace Ornament\Ornament;
 use zpt\anno\Annotations;
 use ReflectionClass;
 use ReflectionProperty;
+use SplObjectStorage;
+use StdClass;
 
 trait Model
 {
-    //use Annotate;
+    public function __construct()
+    {
+        $this->ornamentalize();
+    }
+
+    /**
+     * @var bool
+     *
+     * Stores whether the model is "new" or not.
+     */
+    private $__new = true;
 
     /**
      * @var Ornament\Ornament\State
+     *
      * Private storage of model's current state.
      * @Private
      */
     private $__state;
 
+    /**
+     * @var SplObjectStorage
+     *
+     * Private storage of the model's data sources.
+     */
+    private $__sources;
+
+    /**
+     * @var array
+     *
+     * Hash of decorators for all properties.
+     */
+    private static $__decorators = [];
+
+    /**
+     * @var array
+     *
+     * Hash of defined decorators.
+     */
+    private static $__decoratorMethods = [];
+
     protected function ornamentalize()
     {
+        static $reflection;
+        static $properties;
+        if (!isset($reflection)) {
+            $reflection = new ReflectionClass($this);
+            $properties = $reflection->getProperties(ReflectionProperty::IS_PUBLIC | ReflectionProperty::IS_PROTECTED);
+        }
+
         static $annotations;
         if (!isset($annotations)) {
             $annotator = get_class($this);
             if (strpos($annotator, '@anonymous')) {
-                $annotator = (new ReflectionClass($this))
-                    ->getParentClass()->name;
+                $annotator = $reflection->getParentClass()->name;
+                $reflector = new ReflectionClass($annotator);
+            } else {
+                $reflector = $reflection;
             }
-            $reflector = new ReflectionClass($annotator);
             $annotations['class'] = new Annotations($reflector);
             $annotations['methods'] = [];
             foreach ($reflector->getMethods() as $method) {
-                $annotations['methods'][$method->getName()]
-                    = new Annotations($method);
+                $anns = new Annotations($method);
+                $name = $method->getName();
+                if (isset($anns['Decorate'])) {
+                    self::$__decoratorMethods[$anns['Decorate']] = $name;
+                }
+                $annotations['methods'][$name] = $anns;
             }
-            foreach ($reflector->getProperties(
-                ReflectionProperty::IS_PUBLIC |
-                ReflectionProperty::IS_PROTECTED
-            ) as $property) {
-                $annotations['properties'][$property->getName()]
-                    = new Annotations($property);
+            $defaults = $reflector->getDefaultProperties();
+            foreach ($properties as $property) {
+                $name = $property->getName();
+                $anns = new Annotations($property);
+                $annotations['properties'][$name] = $anns;
+                if (isset($this->$name, $defaults[$name])
+                    && $this->$name != $defaults[$name]
+                ) {
+                    $this->__new = false;
+                }
+                self::$__decorators[$name] = [];
+                foreach (self::$__decoratorMethods as $decorator => $method) {
+                    if (isset($anns[$decorator])) {
+                        self::$__decorators[$name][$decorator] = [
+                            $method,
+                            $anns[$decorator],
+                        ];
+                    }
+                }
             }
+        }
+
+        if (!isset($this->__sources)) {
+            $this->__sources = new SplObjectStorage;
         }
         if (!isset($this->__state)) {
-            $this->__state = new State($this, $annotations);
+            $this->__state = new StdClass;
         }
-        return $this->__state;
+        if ($this->__sources->contains($this->__state)) {
+            $this->__sources->detach($this->__state);
+        }
+        foreach ($properties as $property) {
+            $name = $property->name;
+            $this->__state->$name = $this->$name;
+            unset($this->$name);
+        }
+        $this->__sources->attach($this->__state);
     }
 
     /**
-     * Overloaded getter. All protected properties on a model are exposed this
-     * way, _unless_ their name starts with an underscore or they are marked as
-     * @Private. Non-public properties are read-only by default.
+     * Overloaded getter. All public and protected properties on a model are
+     * exposed this way, _unless_ they are marked as `@Private`. Non-public
+     * properties are read-only.
      *
      * Also checks if a getProperty exists on the model, or a magic callback
      * for 'get' was registered under this property's name.
@@ -61,27 +132,37 @@ trait Model
      */
     public function __get($prop)
     {
-        $state = $this->ornamentalize();
-        if ($state->hasProperty($prop)) {
-            $method = 'get'.ucfirst($state->unCamelCase($prop));
-            if (method_exists($this, $method)) {
-                return $this->$method();
-            }
-            if (method_exists($this, 'callback')) {
-                try {
-                    return $this->callback($method, []);
-                } catch (Exception\UndefinedCallback $e) {
-                }
-            }
-            if (property_exists($this, $prop) && $prop{0} != '_') {
-                return $this->$prop;
+        $method = 'get'.ucfirst(preg_replace_callback(
+            "@_(\w)@",
+            function ($match) {
+                return strtoupper($match[1]);
+            },
+            $prop
+        ));
+        if (method_exists($this, $method)) {
+            return $this->$method();
+        }
+        $found = false;
+        foreach ($this->__sources as $source) {
+            if (property_exists($source, $prop)) {
+                $val = $source->$prop;
+                $found = true;
+                break;
             }
         }
-        trigger_error(sprintf(
-            "Trying to get undefined virtual property %s on %s.",
-            $prop,
-            get_class($this)
-        ), E_USER_NOTICE);
+        if (!$found) {
+            trigger_error(sprintf(
+                "Trying to get undefined or private property %s on %s.",
+                $prop,
+                get_class($this)
+            ), E_USER_NOTICE);
+            return null;
+        }
+        array_walk(self::$__decorators[$prop], function ($decorator) use (&$val) {
+            list($method, $params) = $decorator;
+            $val = $this->$method($val, $params);
+        });
+        return $val;
     }
 
     /**
@@ -97,22 +178,38 @@ trait Model
     */
     public function __set($prop, $value)
     {
-        $state = $this->ornamentalize();
-        if ($state->hasProperty($prop)) {
-            $method = 'set'.ucfirst($state->denormalize($prop));
-            if (method_exists($this, $method)) {
-                return $this->$method($value);
+        $method = 'set'.ucfirst(preg_replace_callback(
+            "@_(\w)@",
+            function ($match) {
+                return strtoupper($match[1]);
+            },
+            $prop
+        ));
+        if (method_exists($this, $method)) {
+            return $this->$method($value);
+        }
+        $modified = false;
+        foreach ($this->__sources as $source) {
+            if (property_exists($source, $prop)) {
+                $val = $value;
+                array_walk(self::$__decorators[$prop], function ($decorator) use (&$val) {
+                    list($method, $params) = $decorator;
+                    $val = $this->$method($val, $params);
+                    if (is_object($val)) {
+                        if (is_callable($val)) {
+                            $val = $val();
+                        } else {
+                            $val = "$val";
+                        }
+                        $value = $val;
+                    }
+                });
+                $source->$prop = $value;
+                $modified = true;
             }
-            if (method_exists($this, 'callback')) {
-                try {
-                    return $this->callback($method, [$value]);
-                } catch (Exception\UndefinedCallback $e) {
-                }
-            }
-            if (!isset($this->__adapters)) {
-                $this->$prop = $value;
-                return;
-            }
+        }
+        if ($modified) {
+            return;
         }
         trigger_error(sprintf(
             "Trying to set undefined or immutable virtual property %s on %s.",
@@ -130,6 +227,13 @@ trait Model
      */
     public function __isset($prop)
     {
+        foreach ($this->__sources as $source) {
+            if (property_exists($source, $prop)) {
+                return true;
+            }
+        }
+        return false;
+
         $state = $this->ornamentalize();
         if (!$state->hasProperty($prop)) {
             return false;
@@ -162,19 +266,37 @@ trait Model
     }
 
     /**
-     * Returns true if any of the associated containers is new.
+     * @param object $source
+     * @return static
+     */
+    public function addDatasource($source)
+    {
+        $this->__sources[$source] = clone $source;
+        $this->__new = false;
+        return $this;
+    }
+
+    /**
+     * @param object $source
+     * @param mixed ...$ctor Optional construction arguments needed by the new
+     *  model instance.
+     * @return static
+     */
+    public static function fromDatasource($source, ...$ctor)
+    {
+        $model = new static(...$ctor);
+        return $model->addDatasource($source);
+    }
+
+    /**
+     * Returns true if the model doesn't have any existing data sources
+     * attached, otherwise false.
      *
      * @return bool
      */
-    protected function isNew()
+    public function isNew()
     {
-        $this->ornamentalize();
-        foreach ($this->__adapters as $model) {
-            if ($model->isNew()) {
-                return true;
-            }
-        }
-        return false;
+        return $this->__new;
     }
 
     /**
@@ -182,11 +304,10 @@ trait Model
      *
      * @return bool
      */
-    protected function isDirty()
+    public function isDirty()
     {
-        $this->ornamentalize();
-        foreach ($this->__adapters as $model) {
-            if ($model->isDirty()) {
+        foreach ($this->__sources as $source) {
+            if ($this->__sources[$source] != $source) {
                 return true;
             }
         }
@@ -198,34 +319,16 @@ trait Model
      *
      * @return bool
      */
-    protected function isModified($property)
+    public function isModified($property)
     {
-        $this->ornamentalize();
-        foreach ($this->__adapters as $model) {
-            if (property_exists($model, $property)) {
-                return $model->isModified($property);
+        foreach ($this->__sources as $source) {
+            if (property_exists($source, $property)
+                && $source->$property != $this->__sources[$source]->$property
+            ) {
+                return true;
             }
         }
-    }
-
-    /**
-     * Get the current state of the model (new, clean, dirty or deleted).
-     *
-     * @return string The current state.
-     */
-    protected function state()
-    {
-        return $this->ornamentalize()->getState();
-        // Do just-in-time checking for clean/dirty:
-        if ($this->__state == 'clean') {
-            foreach ($this->__adapters as $model) {
-                if ($model->isDirty()) {
-                    $this->__state = 'dirty';
-                    break;
-                }
-            }
-        }
-        return $this->__state;
+        return false;
     }
 
     /**
@@ -237,21 +340,11 @@ trait Model
      */
     protected function markClean()
     {
-        $this->ornamentalize();
-        foreach ($this->__adapters as $model) {
-            $model->markClean();
-        }
-        $annotations = $this->annotations()['properties'];
-        foreach ($annotations as $prop => $anns) {
-            if (isset($anns['Private']) || $prop{0} == '_') {
-                continue;
-            }
-            $value = $this->$prop;
-            if (is_object($value) and method_exists($value, 'markClean')) {
-                $value->markClean();
+        foreach ($this->__sources as $source) {
+            foreach ($source as $prop => $value) {
+                $source->$prop = $this->$prop;
             }
         }
-        $this->__state = 'clean';
     }
 
     /**
