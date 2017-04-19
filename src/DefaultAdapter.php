@@ -1,40 +1,60 @@
 <?php
 
-namespace Ornament\Adapter;
+namespace Ornament\Ornament;
 
-use Ornament\Adapter;
-use Ornament\Container;
 use PDO as Base;
 use PDOException;
 use InvalidArgumentException;
 
 /**
- * Simple trait custom adapters may `use` to quickly get setup.
+ * Base adapter class others may extend.
  */
-trait Defaults
+abstract class DefaultAdapter implements Adapter
 {
     /**
      * @var Stores the "parent" adapter, e.g. a PDO instance.
      */
     protected $adapter;
+
     /**
      * @var Stores the identifier for this model (i.e., whatever name needs to
      *  be used when communicating with its backend storage, like a table name).
      */
+
     protected $identifier;
     /**
-     * @var The fields (properties) on the Model handled by this adapter.
+     * @var The properties (properties) on the Model handled by this adapter.
      */
-    protected $fields = [];
+
+    protected $properties = [];
     /**
-     * @var The fields to be considered primary keys a.k.a. unique identifiers.
+     * @var The properties to be considered primary keys a.k.a. unique identifiers.
      */
+
     protected $primaryKey = [];
     /**
      * @var Private store for model annotations that might be needed during data
      *  manipulation.
      */
+
     protected $annotations = [];
+
+    /**
+     * Guess the identifier for a model based on a callback.
+     */
+    public function guessIdentifier(callable $fn = null)
+    {
+        $class = get_class($this);
+        if (strpos($class, '@anonymous') !== false) {
+            $class = (new ReflectionClass($this))->getParentClass()->name;
+        }
+        if (!isset($fn)) {
+            $fn = function ($class) {
+                return $class;
+            };
+        }
+        return $fn($class);
+    }
 
     /**
      * Set the identifier to be used for this adapter.
@@ -49,25 +69,25 @@ trait Defaults
     }
 
     /**
-     * Set the fields valid for this adapter.
+     * Set the properties valid for this adapter.
      *
-     * @param array $fields Array of field names.
+     * @param array $properties Array of property names this adapter managers.
      * @return self
      */
-    public function setFields(array $fields)
+    public function setProperties(array $properties)
     {
-        $this->fields = $fields;
+        $this->properties = $properties;
         return $this;
     }
 
     /**
-     * Set the field(s) to be used as primary key(s).
+     * Set the propertie(s) to be used as primary key(s).
      *
-     * @param string $field... One or more field names, which must correspond to
+     * @param string $property... One or more property names, which must correspond to
      *  properties defined on the model in question.
      * @return self
      */
-    public function setPrimaryKey($field)
+    public function setPrimaryKey($property)
     {
         $this->primaryKey = func_get_args();
         return $this;

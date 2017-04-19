@@ -1,203 +1,306 @@
 <?php
 
-namespace Ornament;
+namespace Ornament\Ornament;
 
-use SplObjectStorage;
+use zpt\anno\Annotations;
+use ReflectionClass;
 use ReflectionProperty;
+use SplObjectStorage;
+use StdClass;
 
 trait Model
 {
-    use Annotate;
-    use Identify;
+    public function __construct()
+    {
+        $this->ornamentalize();
+    }
 
     /**
-     * @var array
-     * Private storage of registered adapters for this model.
-     * @Private
+     * @var bool
+     *
+     * Stores whether the model is "new" or not.
      */
-    private $__adapters;
+    private $__new = true;
 
     /**
-     * @var string
+     * @var Ornament\Ornament\State
+     *
      * Private storage of model's current state.
      * @Private
      */
-    private $__state = 'new';
+    private $__state;
+
+    /**
+     * @var SplObjectStorage
+     *
+     * Private storage of the model's data sources.
+     */
+    private $__sources;
 
     /**
      * @var array
-     * Private storage of the model's primary key(s).
+     *
+     * Hash of decorators for all properties.
      */
-    private $__primaryKeys;
+    private static $__decorators = [];
 
     /**
-     * Register the specified adapter for the given identifier and fields.
+     * @var array
      *
-     * Generic method to add an Ornament adapter. Specific implementations
-     * should generally supply a trait with an addImplementationAdapter that
-     * takes care of wrapping the adapter in an Adapter-compatible object.
-     *
-     * Note that a model is considered "new" if fields are already populated.
-     * This works for Pdo-style adapters, since PDO::FETCH_CLASS sets values
-     * _prior_ to object instantiation. For adapters using other data sources
-     * (e.g. an API) you would need to correct this manually.
-     *
-     * @param Ornament\Adapter $adapter Adapter object implementing the
-     *  Ornament\Adapter interface.
-     * @param string $id Identifier for this adapter (table name, API endpoint,
-     *  etc.)
-     * @param array $fields Array of fields (properties) this adapter works on.
-     *  Should default to "all known public non-virtual members".
-     * @return Ornament\Adapter The registered adapter, for easy chaining.
+     * Hash of defined decorators.
      */
-    protected function addAdapter(Adapter $adapter, $id = null, array $fields = null)
-    {
-        if (!isset($this->__adapters)) {
-            $this->__adapters = new SplObjectStorage;
-        }
-        $annotations = $this->annotations();
-        if (!isset($id)) {
-            $id = isset($annotations['class']['Identifier']) ?
-                $annotations['class']['Identifier'] :
-                $this->guessIdentifier();
-        }
-        if (!isset($fields)) {
-            $fields = [];
-            foreach ($annotations['properties'] as $prop => $anno) {
-                if ($prop{0} != '_'
-                    && !(isset($anno['Virtual']) && !isset($anno['From']))
-                    && !isset($anno['Private'])
-                    && !is_array($this->$prop)
-                ) {
-                    $fields[] = $prop;
-                }
-                if (is_array($this->$prop)) {
-                    $this->$prop = new Collection(
-                        [],
-                        $this,
-                        isset($anno['Mapping']) ?
-                            $anno['Mapping'] :
-                            ['id' => $prop]
-                    );
-                }
-            }
-        }
-        $pk = [];
-        foreach ($annotations['properties'] as $prop => $anno) {
-            if (isset($anno['PrimaryKey'])) {
-                $pk[] = $prop;
-            }
-            if (isset($anno['Bitflag'])) {
-                $this->$prop = new Bitflag(
-                    $this->$prop,
-                    $anno['Bitflag']
-                );
-            }
-        }
-        if (!$pk && in_array('id', $fields)) {
-            $pk[] = 'id';
-        }
-        if ($pk) {
-            $this->__primaryKeys = $pk;
-            call_user_func_array([$adapter, 'setPrimaryKey'], $pk);
-        }
-        $adapter->setIdentifier($id)
-                ->setFields($fields)
-                ->setAnnotations($annotations);
-        $model = new Container($adapter);
-        $new = true;
-        foreach ($fields as $field => $alias) {
-            $fname = is_numeric($field) ? $alias : $field;
-            if (in_array($fname, $pk) && isset($this->$fname)) {
-                $new = false;
-            }
-            $model->$alias =& $this->$fname;
-        }
-        if ($new) {
-            $model->markNew();
-        } else {
-            $model->markClean();
-        }
-        $this->__adapters->attach($model);
-        foreach ($this->__adapters as $model) {
-            if (!$model->isNew()) {
-                $this->__state = 'clean';
-            }
-        }
-        return $adapter;
-    }
+    private static $__decoratorMethods = [];
 
-    /**
-     * Get the primary key(s) for this model.
-     *
-     * @return mixed Either the scalar single primary key, or an array of scalar
-     *  values if the model has multiple fields defined as the primary key.
-     */
-    public function getPrimaryKey()
+    protected function ornamentalize()
     {
-        $pks = [];
-        foreach ($this->__primaryKeys as $pk) {
-            if (is_object($this->$pk)) {
-                $traits = class_uses($this->$pk);
-                if (isset($traits['Ornament\Model'])
-                    || isset($traits['Ornament\JsonModel'])
-                ) {
-                    $pks[] = $this->$pk->getPrimaryKey();
-                } else {
-                    $pks[] = "{$this->$pk}";
-                }
+        static $reflection;
+        static $properties;
+        if (!isset($reflection)) {
+            $reflection = new ReflectionClass($this);
+            $properties = $reflection->getProperties(ReflectionProperty::IS_PUBLIC | ReflectionProperty::IS_PROTECTED);
+        }
+
+        static $annotations;
+        if (!isset($annotations)) {
+            $annotator = get_class($this);
+            if (strpos($annotator, '@anonymous')) {
+                $annotator = $reflection->getParentClass()->name;
+                $reflector = new ReflectionClass($annotator);
             } else {
-                $pks[] = $this->$pk;
+                $reflector = $reflection;
+            }
+            $annotations['class'] = new Annotations($reflector);
+            $annotations['methods'] = [];
+            foreach ($reflector->getMethods() as $method) {
+                $anns = new Annotations($method);
+                $name = $method->getName();
+                if (isset($anns['Decorate'])) {
+                    self::$__decoratorMethods[$anns['Decorate']] = $name;
+                }
+                $annotations['methods'][$name] = $anns;
+            }
+            $defaults = $reflector->getDefaultProperties();
+            foreach ($properties as $property) {
+                $name = $property->getName();
+                $anns = new Annotations($property);
+                $annotations['properties'][$name] = $anns;
+                if (isset($this->$name, $defaults[$name])
+                    && $this->$name != $defaults[$name]
+                ) {
+                    $this->__new = false;
+                }
+                self::$__decorators[$name] = [];
+                foreach (self::$__decoratorMethods as $decorator => $method) {
+                    if (isset($anns[$decorator])) {
+                        self::$__decorators[$name][$decorator] = [
+                            $method,
+                            $anns[$decorator],
+                        ];
+                    }
+                }
             }
         }
-        return count($pks) == 1 ? $pks[0] : $pks;
+
+        if (!isset($this->__sources)) {
+            $this->__sources = new SplObjectStorage;
+        }
+        if (!isset($this->__state)) {
+            $this->__state = new StdClass;
+        }
+        if ($this->__sources->contains($this->__state)) {
+            $this->__sources->detach($this->__state);
+        }
+        foreach ($properties as $property) {
+            $name = $property->name;
+            $this->__state->$name = $this->$name;
+            unset($this->$name);
+        }
+        $this->__sources->attach($this->__state);
     }
 
     /**
-     * (Re)loads the current model based on the specified adapters.
-     * Optionally also calls methods annotated with `onLoad`.
+     * Overloaded getter. All public and protected properties on a model are
+     * exposed this way, _unless_ they are marked as `@Private`. Non-public
+     * properties are read-only.
      *
-     * @param bool $includeBase If set to true, loads the base model; if false,
-     *  only (re)loads linked models. Defaults to true.
-     * @return void
+     * Also checks if a getProperty exists on the model, or a magic callback
+     * for 'get' was registered under this property's name.
+     *
+     * @param string $prop Name of the property.
+     * @return mixed The property's (optionally computed) value.
+     * @throws An error of type E_USER_NOTICE if the property is unknown.
      */
-    public function load($includeBase = true)
+    public function __get($prop)
     {
-        $annotations = $this->annotations();
-        if ($includeBase) {
-            $errors = [];
-            foreach ($this->__adapters as $model) {
-                $model->load();
+        $method = 'get'.ucfirst(preg_replace_callback(
+            "@_(\w)@",
+            function ($match) {
+                return strtoupper($match[1]);
+            },
+            $prop
+        ));
+        if (method_exists($this, $method)) {
+            return $this->$method();
+        }
+        $found = false;
+        foreach ($this->__sources as $source) {
+            if (property_exists($source, $prop)) {
+                $val = $source->$prop;
+                $found = true;
+                break;
             }
         }
-        foreach ($annotations['methods'] as $method => $anns) {
-            if (isset($anns['onLoad'])) {
-                $this->$method($annotations['properties']);
+        if (!$found) {
+            trigger_error(sprintf(
+                "Trying to get undefined or private property %s on %s.",
+                $prop,
+                get_class($this)
+            ), E_USER_NOTICE);
+            return null;
+        }
+        array_walk(self::$__decorators[$prop], function ($decorator) use (&$val) {
+            list($method, $params) = $decorator;
+            $val = $this->$method($val, $params);
+        });
+        return $val;
+    }
+
+    /**
+     * Overloaded setter. For protected, private or virtual properties, a
+     * setPropertyname method must exist on the model, or a magic callback of
+     * the same name must have been defined.
+     *
+     * @param string $prop The property to set.
+     * @param mixed $value The new value.
+     * @return void
+     * @throws An error of type E_USER_NOTICE if the property is unknown or
+     *  immutable.
+    */
+    public function __set($prop, $value)
+    {
+        $method = 'set'.ucfirst(preg_replace_callback(
+            "@_(\w)@",
+            function ($match) {
+                return strtoupper($match[1]);
+            },
+            $prop
+        ));
+        if (method_exists($this, $method)) {
+            return $this->$method($value);
+        }
+        $modified = false;
+        if (!isset($this->__sources)) {
+            $this->__new = false;
+            return;
+        }
+        foreach ($this->__sources as $source) {
+            if (property_exists($source, $prop)) {
+                $val = $value;
+                array_walk(self::$__decorators[$prop], function ($decorator) use (&$val) {
+                    list($method, $params) = $decorator;
+                    $val = $this->$method($val, $params);
+                    if (is_object($val)) {
+                        if (is_callable($val)) {
+                            $val = $val();
+                        } else {
+                            $val = "$val";
+                        }
+                        $value = $val;
+                    }
+                });
+                $source->$prop = $value;
+                $modified = true;
             }
         }
-        foreach ($annotations['properties'] as $prop => $anns) {
-            if (isset($anns['Bitflag'])) {
-                $this->$prop = new Bitflag(
-                    (int)("{$this->$prop}"),
-                    $anns['Bitflag']
-                );
+        if ($modified) {
+            return;
+        }
+        trigger_error(sprintf(
+            "Trying to set undefined or immutable virtual property %s on %s.",
+            $prop,
+            get_class($this)
+        ), E_USER_NOTICE);
+    }
+    
+    /**
+     * Check if a property is defined, but not public or virtual. Note that it
+     * will return true if a property _is_ defined, but has a value of null.
+     *
+     * @param string $prop The property to check.
+     * @return boolean True if set, otherwise false.
+     */
+    public function __isset($prop)
+    {
+        foreach ($this->__sources as $source) {
+            if (property_exists($source, $prop)) {
+                return true;
             }
+        }
+        return false;
+
+        $state = $this->ornamentalize();
+        if (!$state->hasProperty($prop)) {
+            return false;
+        }
+        if (property_exists($this, $prop) && $prop{0} != '_') {
+            return true;
+        }
+        $method = 'get'.ucfirst(Helper::denormalize($prop));
+        if (method_exists($this, $method)) {
+            return true;
+        }
+        if (method_exists($this, 'callback')) {
+            try {
+                $this->callback($method, null);
+                return true;
+            } catch (Exception\UndefinedCallback $e) {
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Overloader for private/protected methods.
+     */
+    public function __call($method, array $args = [])
+    {
+        if (!method_exists($this, $method)) {
+            return;
         }
     }
 
     /**
-     * Returns true if any of the associated containers is new.
+     * @param object $source
+     * @return static
+     */
+    public function addDatasource($source)
+    {
+        $this->__sources[$source] = clone $source;
+        $this->__new = false;
+        return $this;
+    }
+
+    /**
+     * @param object $source
+     * @param mixed ...$ctor Optional construction arguments needed by the new
+     *  model instance.
+     * @return static
+     */
+    public static function fromDatasource($source, ...$ctor)
+    {
+        $model = new static(...$ctor);
+        return $model->addDatasource($source);
+    }
+
+    /**
+     * Returns true if the model doesn't have any existing data sources
+     * attached, otherwise false.
      *
      * @return bool
      */
     public function isNew()
     {
-        foreach ($this->__adapters as $model) {
-            if ($model->isNew()) {
-                return true;
-            }
-        }
-        return false;
+        return $this->__new;
     }
 
     /**
@@ -207,8 +310,8 @@ trait Model
      */
     public function isDirty()
     {
-        foreach ($this->__adapters as $model) {
-            if ($model->isDirty()) {
+        foreach ($this->__sources as $source) {
+            if ($this->__sources[$source] != $source) {
                 return true;
             }
         }
@@ -222,120 +325,14 @@ trait Model
      */
     public function isModified($property)
     {
-        foreach ($this->__adapters as $model) {
-            if (property_exists($model, $property)) {
-                return $model->isModified($property);
+        foreach ($this->__sources as $source) {
+            if (property_exists($source, $property)
+                && $source->$property != $this->__sources[$source]->$property
+            ) {
+                return true;
             }
         }
-    }
-    
-    /**
-     * Persists the model back to storage based on the specified adapters.
-     * If an adapter supports transactions, you are encouraged to use them;
-     * but you should do so in your own code.
-     *
-     * @return null|array null on success, or an array of errors encountered.
-     * @throws Ornament\Exception\Immutable if the model implements the
-     *  Immutable interface and is thus immutable.
-     * @throws Ornament\Exception\Uncreateable if the model is new and implemnts
-     *  the Uncreatable interface and can therefor not be created
-     *  programmatically.
-     */
-    public function save()
-    {
-        if ($this instanceof Immutable) {
-            throw new Exception\Immutable($this);
-        }
-        $errors = [];
-        if (method_exists($this, 'notify')) {
-            $notify = clone $this;
-        }
-        foreach ($this->__adapters as $model) {
-            if ($model->isDirty()) {
-                if ($model->isNew() && $this instanceof Uncreateable) {
-                    throw new Exception\Uncreateable($this);
-                }
-                if (!$model->save()) {
-                    $errors[] = true;
-                }
-            }
-        }
-        $annotations = $this->annotations()['properties'];
-        foreach ($annotations as $prop => $anns) {
-            if (isset($anns['Private']) || $prop{0} == '_') {
-                continue;
-            }
-            $value = $this->$prop;
-            if (is_object($value)) {
-                if ($value instanceof Collection && $value->isDirty()) {
-                    if ($error = $value->save()) {
-                        $errors = array_merge($errors, $error);
-                    }
-                } elseif ($save = Helper::modelSaveMethod($value)
-                    and !method_exists($value, 'isDirty') || $value->isDirty()
-                ) {
-                    if (!$value->$save()) {
-                        $errors[] = true;
-                    }
-                }
-            }
-        }
-        if (isset($notify)) {
-            $notify->notify();
-        }
-        $this->markClean();
-        return $errors ? $errors : null;
-    }
-
-    /**
-     * Deletes the current model from storage based on the specified adapters.
-     * If an adapter supports transactions, you are encouraged to use them;
-     * but you should do so in your own code.
-     *
-     * @return null|array null on success, or an array of errors encountered.
-     * @throw Ornament\Exception\Undeleteable if the model implements the
-     *  Undeleteable interface and is hence "protected".
-     */
-    public function delete()
-    {
-        if (method_exists($this, 'notify')) {
-            $notify = clone $this;
-        }
-        if ($this instanceof Undeleteable) {
-            throw new Exception\Undeleteable($this);
-        }
-        $errors = [];
-        foreach ($this->__adapters as $adapter) {
-            if ($error = $adapter->delete($this)) {
-                $errors[] = $error;
-            } else {
-                $adapter->markDeleted();
-            }
-        }
-        if (isset($notify)) {
-            $notify->notify();
-        }
-        $this->__state = 'deleted';
-        return $errors ? $errors : null;
-    }
-
-    /**
-     * Get the current state of the model (new, clean, dirty or deleted).
-     *
-     * @return string The current state.
-     */
-    public function state()
-    {
-        // Do just-in-time checking for clean/dirty:
-        if ($this->__state == 'clean') {
-            foreach ($this->__adapters as $model) {
-                if ($model->isDirty()) {
-                    $this->__state = 'dirty';
-                    break;
-                }
-            }
-        }
-        return $this->__state;
+        return false;
     }
 
     /**
@@ -345,22 +342,13 @@ trait Model
      *
      * @return void
      */
-    public function markClean()
+    protected function markClean()
     {
-        foreach ($this->__adapters as $model) {
-            $model->markClean();
-        }
-        $annotations = $this->annotations()['properties'];
-        foreach ($annotations as $prop => $anns) {
-            if (isset($anns['Private']) || $prop{0} == '_') {
-                continue;
-            }
-            $value = $this->$prop;
-            if (is_object($value) and method_exists($value, 'markClean')) {
-                $value->markClean();
+        foreach ($this->__sources as $source) {
+            foreach ($source as $prop => $value) {
+                $source->$prop = $this->$prop;
             }
         }
-        $this->__state = 'clean';
     }
 
     /**
