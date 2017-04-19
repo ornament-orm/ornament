@@ -45,10 +45,9 @@ your data source is. The implementation is entirely up to you. They _should_
 return `true` on success and `false` on failure for neatness' sake, but this
 isn't required.
 
-## Adding the `addMyadapterAdapter` method
-Well, really, call it anything you like. The important thing is that, if needed,
-you wrap your adapter in an object compatible with `Ornament\Adapter` and call
-the generic `addAdapter` method defined by the `Storage` trait:
+## Adding the adapter to your models
+Now you can instantiate your adapter with whatever parameters you need and add
+it to your models.
 
 ```php
 <?php
@@ -59,12 +58,7 @@ class MyCustomModel
 {
     use Storage;
 
-    public function __construct()
-    {
-        $this->addMyadapterAdapter('/some/endpoint/', ['some', 'fields']);
-    }
-
-    public function addMyadapterAdapter($endpoint, array $fields)
+    public function __construct($endpoint, $fields)
     {
         $adapter = new MyAwesomeApiAdapter($endpoint, $fields);
         $this->addAdapter($adapter, $endpoint, $fields);
@@ -73,7 +67,9 @@ class MyCustomModel
 ```
 
 Of course, you could rewrite this so that `$fields` or perhaps even `$endpoint`
-are guesstimated from the class signature (like in the PDO adapter).
+are guesstimated from the class signature (like in the PDO adapter), or the
+adapter is injected and parts of the endpoint (scheme, domain) are already
+pre-filled.
 
 ## Feel free to contribute!
 Did you write a generic adapter for some well known service (we're personally

@@ -59,13 +59,13 @@ The `$thumbnail` property is annotated with a `@Model`. This is the sub-model
 we want Ornament to load instead of the "flat" integer value. The default quess
 to load the sub-model with an `id` property that matches the property value (in
 this case, `thumbnail`). You can optionally annotate with `@Mapping` to override
-this behavious. `@Mapping` takes a list of key/value pairs, where the keys are
+this behaviour. `@Mapping` takes a list of key/value pairs, where the keys are
 the property that should match on the sub-model, and the values are the property
 whose value on the parent model is used. Hence, for the `ImageModel` we could
 specify `@Mapping id = thumbnail` to mimic the default behaviour.
 
 The `$images` property is also annotated with a `@Model`, but since it is an
-array Ornament will automatically created a one-to-many relationship.
+array Ornament will automatically create a one-to-many relationship.
 
 > Models retrieved using `find` are automatically given their related models.
 > For models retrieved using `query` you should call `load` manually on each

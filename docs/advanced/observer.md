@@ -66,10 +66,11 @@ the observing class should receive the original, unsaved model (so it can do
 dirty/new checking etc. and react accordingly). Once an object is saved it's
 marked as 'pristine' again, so that would never work.
 
+## Checking multiple states
 Implementors are free to define multiple observing methods for a single class.
-Additionally, you can annotate observing methods with `/** NotifyForState */
-specifying one or more states (`new`, `clean`, `dirty` or `deleted`) the
-notification should trigger for.
+Additionally, you can annotate observing methods with `/** NotifyForState */`
+specifying one or more states (`new`, `pristine`, `clean`, `dirty` or `deleted`)
+the notification should trigger for.
 
 So the following could be a valid strategy if it makes sense in your code:
 
@@ -89,5 +90,19 @@ public function someOtherMethod(Message $model)
 {
     // Needed for other reasons...
 }
+```
+
+A model is considered:
+
+- `new` if it has been created but not saved yet;
+- `pristine` if it has been loaded but nothing has been changed;
+- `clean` if it has been loaded and changed, but is still in its original state;
+- `dirty` if it has been loaded and changed;
+- `deleted` if it was loaded and deleted.
+
+You may notify for multiple states by using multiple values:
+
+```php
+/** @NotifyForState new, pristine */
 ```
 

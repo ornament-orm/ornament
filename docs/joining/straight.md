@@ -1,6 +1,6 @@
 # Getting data from more than one source
 Apart from the simplest of projects, you'll usually want to mix and match models
-to create compound object. For instance, imagine a `User` model which looks to
+to create a compound object. For instance, imagine a `User` model which looks to
 a `user` table _and_ needs to left join a `session` table to see if that user is
 also online at the moment, or an `Item` model which has a number of `images`
 attached, one of which is the user's thumbnail.
@@ -10,23 +10,24 @@ Let's start with the first example; the user with her online check. Our table
 structure could look something like this:
 
 ```sql
-CREATE TABLE user (
+CREATE TABLE people (
     id INTEGER PRIMARY KEY NOT NULL,
     -- other fields...
 );
 
-CREATE TABLE session (
+CREATE TABLE sess (
     -- assuming the id is PHP's session_id()
     id VARCHAR(32) PRIMARY KEY NOT NULL,
     -- other fields, e.g. actual session data...
-    user INTEGER
+    person INTEGER
 );
 ```
 
 What we'd like to do here is a query of the following sort:
 
 ```sql
-SELECT user.*, session.id sessid FROM user LEFT JOIN session ON user = user.id
+SELECT people.*, sess.id sessid FROM people
+    LEFT JOIN sess ON person = people.id;
 ```
 
 Let's write a simple model for that which shows how we can instruct Ornament to
@@ -35,7 +36,7 @@ load data that way:
 ```php
 <?php
 
-/** @Include session = [user = id] */
+/** @Include sess = [person = id] */
 class UserModel
 {
     use Ornament\Model;
@@ -50,7 +51,7 @@ class UserModel
 
 We annotate the Model to `@Include` the `session` table. The exact semantics for
 `@Include` will differ per adapter; the `Pdo` adapter uses the above form to
-generate a `LEFT JOIN session ON session.user = user.id`.
+generate a `LEFT JOIN sess ON sess.person = people.id`.
 
 > To generate a straight `JOIN` use `@Require` instead of `@Include`.
 
@@ -68,18 +69,18 @@ a query like the following:
 
 ```sql
 -- If the currently logged in user has id "1":
-SELECT user.*, session.id sessid FROM user LEFT JOIN session ON user = '1'
+SELECT people.*, sess.id sessid FROM people LEFT JOIN sess ON person = '1'
 ```
 
-In other words, we need to programmatically inject a value into our query. Since
-Ornament 0.7 this is possible via the `setAdditionalQueryParameters` on
-adapters, combined with using `"?"` as a placeholder in the `@Include`
-definition instead of a mapped field name:
+In other words, we need to programmatically inject a value into our adapter.
+This is possible via the `setAdditionalQueryParameters` method on adapters,
+combined with using `:paramName` placeholders in the `@Include` definition
+instead of a mapped field name:
 
 ```php
 <?php
 
-/** @Include session = [user = ?] */
+/** @Include session = [user = :userid] */
 class UserModel
 {
     use Ornament\Model;
@@ -94,12 +95,11 @@ class UserModel
     {
         // etc.
         $this->addAdapter(new Ornament\Adapter\Pdo($myPdoObject))
-            ->setAdditionalQueryParameters([$userid]);
+            ->setAdditionalQueryParameters(compact('userid'));
     }
 }
 ```
 
-Each `"?"` is replaced by an item in the array argument to the method. Non-`PDO`
-adapters should do their own search and replace (for `PDO` adapters the question
-mark simply binds values to a prepared statement).
+Non-`PDO` adapters should do their own search and replace (for `PDO` adapters the
+`":name"` marks simply bind values to a prepared statement).
 

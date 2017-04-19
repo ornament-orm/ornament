@@ -3,11 +3,15 @@ Before we dive into anything complicated, let's start by writing an Ornament
 model from scratch. We'll begin with a model only storing stuff in a PDO
 database:
 
+```sh
+$ composer require ornament/pdo
+```
+
 ```php
 <?php
 
-use Ornament\Model;
-use Ornament\Adapter;
+use Ornament\Ornament\Model;
+use Ornament\Pdo\Adapter;
 
 class MyModel
 {
@@ -19,7 +23,7 @@ class MyModel
 
     public function __construct(PDO $pdo)
     {
-        $this->addAdapter(new Adapter\Pdo($pdo), 'mytable', ['name', 'comment'])
+        $this->addAdapter(new Adapter($pdo), 'mytable', ['name', 'comment'])
              ->setPrimaryKey('id');
     }
 }
@@ -35,14 +39,15 @@ That's really all you need to get started. But let's look a bit deeper into
 that, because this all still looks like magic.
 
 In the model constructor, we call `addAdapter` with three arguments:
-1. An instance of an `Ornament\Adapter` that wraps our actual connection, in
-   this case a `PDO` object;
+
+1. An instance of an `Ornament\Ornament\Adapter` that wraps our actual
+   connection, in this case a `PDO` object;
 2. An "identifier" for this Model. In this case, we use the table name;
 3. The properties on the Model that are handled by this adapter.
 
-On the return value of that (a wrapped `Ornament\Adapter` object) we then tell
-Ornament how to handle this type of object; we call `setPrimaryKey` to tell the
-PDO adapter what the primary key field is.
+On the return value of that (a wrapped instance of `Ornament\Ornament\Adapter`)
+we then tell Ornament how to handle this type of object; we call `setPrimaryKey`
+to tell the PDO adapter what the primary key field is.
 
 > In this example, the `PDO` object is injected via the constructor, but of
 > course you can get it from wherever you like.

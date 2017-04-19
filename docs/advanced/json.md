@@ -18,22 +18,26 @@ Well, that was easy. The interface requires you to implement a public method
 called `jsonSerialize` which returns the JSON to be serialized (i.e., something
 devoid of internal members).
 
-## Step 2: implement the `jsonSerialize` method
-For Ornament models, you can simply `use` the `JsonModel` trait:
+## Step 2: install the `Ornament\Json` dependency
+```sh
+$ composer require ornament/json
+```
+
+## Step 3: use the `Ornament\Json\Model` trait instead of `Ornament\Ornament\Model`
 
 ```php
 <?php
 
-use Ornament\JsonModel;
+use Ornament\Json\Model;
 
 class MyModel implements JsonSerializable
 {
-    use JsonModel;
+    use Model;
     //...
 }
 ```
 
-The JsonModel adds a `jsonSerialize` method which "flattens" your model object
+The Json Model adds a `jsonSerialize` method which "flattens" your model object
 to a PHP `StdClass`. It does this recursively, i.e. sub-models are also
 flattened (as long as they support it), and Collections are converted to regular
 arrays. Any bitflags are also converted to standard classes.
