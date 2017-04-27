@@ -112,7 +112,13 @@ trait Model
             )
         ) {
             $class = $annotations['properties'][$prop]['var'];
-            return new $class($this->__state->$prop);
+            $args = [];
+            if (isset($annotations['properties'][$prop]['construct'])) {
+                $args = is_array($annotations['properties'][$prop]['construct']) ?
+                    $annotations['properties'][$prop]['construct'] :
+                    [$annotations['properties'][$prop]['construct']];
+            }
+            return new $class($this->__state->$prop, ...$args);
         }
         return $this->__state->$prop;
     }
