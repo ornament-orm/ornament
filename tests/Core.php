@@ -33,12 +33,15 @@ class Core
     }
 
     /**
-     * Models can successfully register and apply decorations {?}.
+     * Models can successfully register and apply decorations {?}. The second
+     * field is decorated using constructor arguments {?}.
      */
     public function testDecorators(DecoratedModel $model)
     {
         $model->field = 2;
         yield assert((int)"{$model->field}" === 1);
+        $model->anotherField = 1;
+        yield assert((int)"{$model->anotherField}" === 6);
     }
 
     /**
