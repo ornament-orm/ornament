@@ -1,354 +1,214 @@
 <?php
 
-namespace Ornament\Ornament;
+namespace Ornament\Core;
 
 use zpt\anno\Annotations;
 use ReflectionClass;
 use ReflectionProperty;
 use SplObjectStorage;
 use StdClass;
+use Error;
 
 trait Model
 {
-    public function __construct()
-    {
-        $this->ornamentalize();
-    }
-
     /**
-     * @var bool
+     * @var StdClass
      *
-     * Stores whether the model is "new" or not.
+     * Private storage of the model's initial state.
      */
-    private $__new = true;
+    private $__initial;
 
     /**
-     * @var Ornament\Ornament\State
+     * @var StdClass
      *
-     * Private storage of model's current state.
-     * @Private
+     * Private storage of the model's current state.
      */
     private $__state;
 
-    /**
-     * @var SplObjectStorage
-     *
-     * Private storage of the model's data sources.
-     */
-    private $__sources;
-
-    /**
-     * @var array
-     *
-     * Hash of decorators for all properties.
-     */
-    private static $__decorators = [];
-
-    /**
-     * @var array
-     *
-     * Hash of defined decorators.
-     */
-    private static $__decoratorMethods = [];
-
-    protected function ornamentalize()
+    public function __construct()
     {
-        static $reflection;
-        static $properties;
-        if (!isset($reflection)) {
-            $reflection = new ReflectionClass($this);
-            $properties = $reflection->getProperties(ReflectionProperty::IS_PUBLIC | ReflectionProperty::IS_PROTECTED);
-        }
+        $this->__ornamentalize();
+    }
 
+    private function __ornamentalize() : array
+    {
+        static $reflector;
+        static $properties;
         static $annotations;
-        if (!isset($annotations)) {
+        if (!isset($reflector, $properties, $annotations)) {
             $annotator = get_class($this);
-            if (strpos($annotator, '@anonymous')) {
-                $annotator = $reflection->getParentClass()->name;
-                $reflector = new ReflectionClass($annotator);
-            } else {
-                $reflector = $reflection;
+            while (strpos($annotator, '@anonymous')) {
+                $annotator = (new ReflectionClass($annotator))->getParentClass()->name;
             }
+            $reflector = new ReflectionClass($annotator);
+            $properties = $reflector->getProperties(ReflectionProperty::IS_PUBLIC | ReflectionProperty::IS_PROTECTED & ~ReflectionProperty::IS_STATIC);
             $annotations['class'] = new Annotations($reflector);
             $annotations['methods'] = [];
             foreach ($reflector->getMethods() as $method) {
                 $anns = new Annotations($method);
                 $name = $method->getName();
-                if (isset($anns['Decorate'])) {
-                    self::$__decoratorMethods[$anns['Decorate']] = $name;
-                }
                 $annotations['methods'][$name] = $anns;
             }
             $defaults = $reflector->getDefaultProperties();
+        }
+        if (!isset($this->__state, $this->__initial)) {
+            $this->__state = new StdClass;
+            $this->__initial = new StdClass;
             foreach ($properties as $property) {
                 $name = $property->getName();
                 $anns = new Annotations($property);
+                $anns['readOnly'] = $property->isProtected();
                 $annotations['properties'][$name] = $anns;
                 if (isset($this->$name, $defaults[$name])
                     && $this->$name != $defaults[$name]
                 ) {
-                    $this->__new = false;
+                    $this->__initial->$name = $this->$name;
                 }
-                self::$__decorators[$name] = [];
-                foreach (self::$__decoratorMethods as $decorator => $method) {
-                    if (isset($anns[$decorator])) {
-                        self::$__decorators[$name][$decorator] = [
-                            $method,
-                            $anns[$decorator],
-                        ];
-                    }
-                }
+                $this->__state->$name = $this->$name;
+                unset($this->$name);
             }
         }
-
-        if (!isset($this->__sources)) {
-            $this->__sources = new SplObjectStorage;
-        }
-        if (!isset($this->__state)) {
-            $this->__state = new StdClass;
-        }
-        if ($this->__sources->contains($this->__state)) {
-            $this->__sources->detach($this->__state);
-        }
-        foreach ($properties as $property) {
-            $name = $property->name;
-            $this->__state->$name = $this->$name;
-            unset($this->$name);
-        }
-        $this->__sources->attach($this->__state);
+        return $annotations;
     }
 
     /**
      * Overloaded getter. All public and protected properties on a model are
-     * exposed this way, _unless_ they are marked as `@Private`. Non-public
-     * properties are read-only.
+     * exposed this way. Non-public properties are read-only.
      *
-     * Also checks if a getProperty exists on the model, or a magic callback
-     * for 'get' was registered under this property's name.
+     * If a method was specified as `@get` for this property, its return value
+     * is used instead. If the property has a `@var` annotation _and_ it is an
+     * instance of `Ornament\Core\Decorator`, the corresponding decorator class
+     * is initialised with the property's current value and returned instead.
      *
      * @param string $prop Name of the property.
      * @return mixed The property's (optionally computed) value.
-     * @throws An error of type E_USER_NOTICE if the property is unknown.
+     * @throws Error if the property is unknown.
      */
     public function __get($prop)
     {
-        $method = 'get'.ucfirst(preg_replace_callback(
-            "@_(\w)@",
-            function ($match) {
-                return strtoupper($match[1]);
-            },
-            $prop
-        ));
-        if (method_exists($this, $method)) {
-            return $this->$method();
-        }
-        $found = false;
-        foreach ($this->__sources as $source) {
-            if (property_exists($source, $prop)) {
-                $val = $source->$prop;
-                $found = true;
-                break;
+        $annotations = $this->__ornamentalize();
+        foreach ($annotations['methods'] as $name => $anns) {
+            if (isset($anns['get']) && $anns['get'] == $prop) {
+                return call_user_func([$this, $name]);
             }
         }
-        if (!$found) {
-            trigger_error(sprintf(
-                "Trying to get undefined or private property %s on %s.",
-                $prop,
-                get_class($this)
-            ), E_USER_NOTICE);
-            return null;
+        if (!property_exists($this->__state, $prop)) {
+            $debug = debug_backtrace()[0];
+            throw new Error(
+                sprintf(
+                    "Cannot access private property %s::%s in %s:%d",
+                    get_class($this),
+                    $prop,
+                    $debug['file'],
+                    $debug['line']
+                ),
+                0
+            );
         }
-        array_walk(self::$__decorators[$prop], function ($decorator) use (&$val) {
-            list($method, $params) = $decorator;
-            $val = $this->$method($val, $params);
-        });
-        return $val;
+        if (isset($annotations['properties'][$prop]['var'])
+            && array_key_exists(
+                'Ornament\Core\Decorator',
+                class_implements($annotations['properties'][$prop]['var'])
+            )
+        ) {
+            $class = $annotations['properties'][$prop]['var'];
+            return new $class($this->__state->$prop);
+        }
+        return $this->__state->$prop;
     }
 
     /**
-     * Overloaded setter. For protected, private or virtual properties, a
-     * setPropertyname method must exist on the model, or a magic callback of
-     * the same name must have been defined.
+     * Overloaded setter. Will only work for public properties (since protected
+     * properties are read-only).
+     *
+     * If the value supplied is an instance of the `@var` annotation _and_ this
+     * is an instance of `Ornament\Core\Decorator`, it is first converted to the
+     * result of `getSource()`. Next, if a method was specified as `@set` for
+     * this property, it is called with the supplied value as a single argumenti
+     * and its return value is used.
+     *
+     * Otherwise, the corresponding property in `__state` is simply mutated. If
+     * an `@var` annotation is given with a scalar type, the type is coerced.
      *
      * @param string $prop The property to set.
      * @param mixed $value The new value.
      * @return void
-     * @throws An error of type E_USER_NOTICE if the property is unknown or
-     *  immutable.
+     * @throws Error if the property is unknown or immutable.
     */
     public function __set($prop, $value)
     {
-        $method = 'set'.ucfirst(preg_replace_callback(
-            "@_(\w)@",
-            function ($match) {
-                return strtoupper($match[1]);
-            },
-            $prop
-        ));
-        if (method_exists($this, $method)) {
-            return $this->$method($value);
+        if (!property_exists($this->__state, $prop)) {
+            $debug = debug_backtrace()[0];
+            throw new Error(
+                sprintf(
+                    "Cannot access private property %s::%s in %s:%d",
+                    get_class($this),
+                    $prop,
+                    $debug['file'],
+                    $debug['line']
+                ),
+                0
+            );
         }
-        $modified = false;
-        if (!isset($this->__sources)) {
-            $this->__new = false;
-            return;
+        $annotations = $this->__ornamentalize();
+        if ($annotations['properties'][$prop]['readOnly']) {
+            $debug = debug_backtrace()[0];
+            throw new Error(
+                sprintf(
+                    "Cannot access protected property %s::%s in %s:%d",
+                    get_class($this),
+                    $prop,
+                    $debug['file'],
+                    $debug['line']
+                ),
+                0
+            );
         }
-        foreach ($this->__sources as $source) {
-            if (property_exists($source, $prop)) {
-                $val = $value;
-                array_walk(self::$__decorators[$prop], function ($decorator) use (&$val) {
-                    list($method, $params) = $decorator;
-                    $val = $this->$method($val, $params);
-                    if (is_object($val)) {
-                        if (is_callable($val)) {
-                            $val = $val();
-                        } else {
-                            $val = "$val";
-                        }
-                        $value = $val;
-                    }
-                });
-                $source->$prop = $value;
-                $modified = true;
+        if (isset($annotations['properties'][$prop]['var'])
+            && array_key_exists(
+                'Ornament\Core\Decorator',
+                class_implements($annotations['properties'][$prop]['var'])
+            )
+            && $value instanceof $annotations['properties'][$prop]['var']
+        ) {
+            $value = $value->getSource();
+        }
+        foreach ($annotations['methods'] as $name => $anns) {
+            if (isset($anns['set']) && $anns['set'] == $prop) {
+                $value = call_user_func([$this, $name], $value);
+                break;
             }
         }
-        if ($modified) {
-            return;
+        if (isset($annotations['properties'][$prop]['var'])
+            && in_array(
+                $annotations['properties'][$prop]['var'],
+                [
+                    'bool',
+                    'int',
+                    'float',
+                    'string',
+                    'array',
+                    'object',
+                    'null',
+                ]
+            )
+        ) {
+            $value = settype($value, $annotations['properties'][$prop]['var']);
         }
-        trigger_error(sprintf(
-            "Trying to set undefined or immutable virtual property %s on %s.",
-            $prop,
-            get_class($this)
-        ), E_USER_NOTICE);
+        $this->__state->$prop = $value;
     }
     
     /**
-     * Check if a property is defined, but not public or virtual. Note that it
-     * will return true if a property _is_ defined, but has a value of null.
+     * Check if a property is defined. Note that this will return true for
+     * protected properties.
      *
      * @param string $prop The property to check.
      * @return boolean True if set, otherwise false.
      */
-    public function __isset($prop)
+    public function __isset($prop) : bool
     {
-        foreach ($this->__sources as $source) {
-            if (property_exists($source, $prop)) {
-                return true;
-            }
-        }
-        return false;
-
-        $state = $this->ornamentalize();
-        if (!$state->hasProperty($prop)) {
-            return false;
-        }
-        if (property_exists($this, $prop) && $prop{0} != '_') {
-            return true;
-        }
-        $method = 'get'.ucfirst(Helper::denormalize($prop));
-        if (method_exists($this, $method)) {
-            return true;
-        }
-        if (method_exists($this, 'callback')) {
-            try {
-                $this->callback($method, null);
-                return true;
-            } catch (Exception\UndefinedCallback $e) {
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Overloader for private/protected methods.
-     */
-    public function __call($method, array $args = [])
-    {
-        if (!method_exists($this, $method)) {
-            return;
-        }
-    }
-
-    /**
-     * @param object $source
-     * @return static
-     */
-    public function addDatasource($source)
-    {
-        $this->__sources[$source] = clone $source;
-        $this->__new = false;
-        return $this;
-    }
-
-    /**
-     * @param object $source
-     * @param mixed ...$ctor Optional construction arguments needed by the new
-     *  model instance.
-     * @return static
-     */
-    public static function fromDatasource($source, ...$ctor)
-    {
-        $model = new static(...$ctor);
-        return $model->addDatasource($source);
-    }
-
-    /**
-     * Returns true if the model doesn't have any existing data sources
-     * attached, otherwise false.
-     *
-     * @return bool
-     */
-    public function isNew()
-    {
-        return $this->__new;
-    }
-
-    /**
-     * Returns true if any of the associated containers is dirty.
-     *
-     * @return bool
-     */
-    public function isDirty()
-    {
-        foreach ($this->__sources as $source) {
-            if ($this->__sources[$source] != $source) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Returns true if a specific property on the model is dirty.
-     *
-     * @return bool
-     */
-    public function isModified($property)
-    {
-        foreach ($this->__sources as $source) {
-            if (property_exists($source, $property)
-                && $source->$property != $this->__sources[$source]->$property
-            ) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Mark the current model as 'clean', i.e. not dirty. Useful if you manually
-     * set values after loading from storage that shouldn't count towards
-     * "dirtiness". Called automatically after saving.
-     *
-     * @return void
-     */
-    protected function markClean()
-    {
-        foreach ($this->__sources as $source) {
-            foreach ($source as $prop => $value) {
-                $source->$prop = $this->$prop;
-            }
-        }
+        return property_exists($this->__state, $prop)
+            && !is_null($this->__state->$prop);
     }
 
     /**
