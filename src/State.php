@@ -3,10 +3,13 @@
 namespace Ornament\Core;
 
 use StdClass;
-use DomainException;
 
 trait State
 {
+    use ModelCheck {
+        ModelCheck::check as __ornamentStateModelCheck;
+    }
+
     /**
      * Returns true if any of the model's properties was modified.
      *
@@ -15,12 +18,7 @@ trait State
      */
     public function isDirty() : bool
     {
-        if (!isset($this->__initial)) {
-            throw new DomainException(sprintf(
-                "%s is not an Ornament model.",
-                get_class($this)
-            ));
-        }
+        $this->__ornamentStateModelCheck();
         foreach ($this->__state as $prop => $val) {
             if ($this->isModified($prop)) {
                 return true;
@@ -37,12 +35,7 @@ trait State
      */
     public function isPristine() : bool
     {
-        if (!isset($this->__initial)) {
-            throw new DomainException(sprintf(
-                "%s is not an Ornament model.",
-                get_class($this)
-            ));
-        }
+        $this->__ornamentStateModelCheck();
         return !$this->isDirty();
     }
 
@@ -54,12 +47,7 @@ trait State
      */
     public function isModified($property)
     {
-        if (!isset($this->__initial)) {
-            throw new DomainException(sprintf(
-                "%s is not an Ornament model.",
-                get_class($this)
-            ));
-        }
+        $this->__ornamentStateModelCheck();
         if (!isset($this->__state->$property) && isset($this->__initial->$property)) {
             return true;
         }
@@ -80,12 +68,7 @@ trait State
      */
     public function markPristine()
     {
-        if (!isset($this->__initial)) {
-            throw new DomainException(sprintf(
-                "%s is not an Ornament model.",
-                get_class($this)
-            ));
-        }
+        $this->__ornamentStateModelCheck();
         $this->__init = clone $this->__state;
     }
 }
