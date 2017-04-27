@@ -23,6 +23,26 @@ class SubtractOne implements Decorator
     }
 }
 
+class DecoratorWithConstructorArguments implements Decorator
+{
+    public function __construct($value, int $one, int $two)
+    {
+        $this->value = $value;
+        $this->one = $one;
+        $this->two = $two;
+    }
+
+    public function getSource() : int
+    {
+        return $this->value * $this->one * $this->two;
+    }
+
+    public function __toString() : string
+    {
+        return (string)$this->getSource();
+    }
+}
+
 class DecoratedModel
 {
     use Model;
@@ -34,25 +54,10 @@ class DecoratedModel
     public $field;
 
     /**
-     * @Test 2
-     * @AnotherTest
+     * @var Ornament\Demo\DecoratorWithConstructorArguments
+     * @construct 2
+     * @construct 3
      */
-    public $two_decorators;
-
-    /**
-     * @Decorate Test
-     */
-    private function decorateTest($value, $modifier = 1)
-    {
-        return $value + $modifier;
-    }
-
-    /**
-     * @Decorate AnotherTest
-     */
-    private function decorateAnother($value)
-    {
-        return $value + 1;
-    }
+    public $anotherField;
 }
 
