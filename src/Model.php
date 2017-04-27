@@ -37,9 +37,6 @@ trait Model
         static $annotations;
         if (!isset($reflector, $properties, $annotations)) {
             $annotator = get_class($this);
-            while (strpos($annotator, '@anonymous')) {
-                $annotator = (new ReflectionClass($annotator))->getParentClass()->name;
-            }
             $reflector = new ReflectionClass($annotator);
             $properties = $reflector->getProperties(ReflectionProperty::IS_PUBLIC | ReflectionProperty::IS_PROTECTED & ~ReflectionProperty::IS_STATIC);
             $annotations['class'] = new Annotations($reflector);
