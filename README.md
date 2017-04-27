@@ -214,7 +214,8 @@ arguments, one should use an `@get`ter.
     that if the `@construct` annotation is already an array, with an index `0`
     set, and a `count()` larger than one, you are specifying multiple
     constructor arguments. _This check will fail if you meant to specify just a
-    single argument, which happens to be a simple array_.
+    single argument, which happens to be a simple array with multiple elements_
+    (e.g. `[1, 2, 3]`).
 
     In these corner cases, just supply a second (dummy) constructor argument so
     the annotations will already be an array by the time Ornament inspects them.
