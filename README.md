@@ -162,10 +162,13 @@ class MyModel
     (well, at least not without doing scary voodoo on your sourcecode) which
     namespaces were imported.
 
-Each Decorator class must implement the `Ornament\Core\Decorator` interface. To
-access the underlying value, use the `getSource()` method. Decorators also must
-implement a `__toString()` method to ensure decorated properties can be safely
-used (e.g. in an `echo` statement).
+Each Decorator class must implement the `Ornament\Core\DecoratorInterface`
+interface. Usually this is dnoe by extending `Ornament\Core\Decorator`, but it
+is allowed to write your own implementation. To access the underlying value, use
+the `getSource()` method. Decorators also must implement a `__toString()` method
+to ensure decorated properties can be safely used (e.g. in an `echo` statement).
+For the abstract base decorator, this is implemented as
+`(string)$this->getSource()` which is usually what you want.
 
 It is also possible to specify constructor arguments for the decorator using the
 `@construct` annotation. Multiple `@construct` arguments can be set; they will
