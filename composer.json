@@ -14,7 +14,7 @@
         "zeptech/annotations": "^1.1"
     },
     "require-dev": {
-        "gentry/gentry": "^0.10.0"
+        "gentry/gentry": "^0.11.0"
     },
     "suggest": {
         "monolyth/formulaic": "PHP5 OO-forms with data binding for (Ornament) models"
