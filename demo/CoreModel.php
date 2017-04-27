@@ -1,12 +1,14 @@
 <?php
 
-namespace Ornament\Ornament\Demo;
+namespace Ornament\Demo;
 
-use Ornament\Ornament\Model;
+use Ornament\Core\Model;
+use Ornament\Core\State;
 
 class CoreModel
 {
     use Model;
+    use State;
 
     protected $id = 1;
     public $name = 'Marijn';
