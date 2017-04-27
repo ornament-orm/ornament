@@ -77,8 +77,9 @@ trait Model
      *
      * If a method was specified as `@get` for this property, its return value
      * is used instead. If the property has a `@var` annotation _and_ it is an
-     * instance of `Ornament\Core\Decorator`, the corresponding decorator class
-     * is initialised with the property's current value and returned instead.
+     * instance of `Ornament\Core\DecoratorInterface`, the corresponding
+     * decorator class is initialised with the property's current value and
+     * returned instead.
      *
      * @param string $prop Name of the property.
      * @return mixed The property's (optionally computed) value.
@@ -107,7 +108,7 @@ trait Model
         }
         if (isset($annotations['properties'][$prop]['var'])
             && array_key_exists(
-                'Ornament\Core\Decorator',
+                'Ornament\Core\DecoratorInterface',
                 class_implements($annotations['properties'][$prop]['var'])
             )
         ) {
@@ -128,10 +129,10 @@ trait Model
      * properties are read-only).
      *
      * If the value supplied is an instance of the `@var` annotation _and_ this
-     * is an instance of `Ornament\Core\Decorator`, it is first converted to the
-     * result of `getSource()`. Next, if a method was specified as `@set` for
-     * this property, it is called with the supplied value as a single argumenti
-     * and its return value is used.
+     * is an instance of `Ornament\Core\DecoratorInterface`, it is first
+     * converted to the result of `getSource()`. Next, if a method was specified
+     * as `@set` for this property, it is called with the supplied value as a
+     * single argument and its return value is used.
      *
      * Otherwise, the corresponding property in `__state` is simply mutated. If
      * an `@var` annotation is given with a scalar type, the type is coerced.
@@ -172,7 +173,7 @@ trait Model
         }
         if (isset($annotations['properties'][$prop]['var'])
             && array_key_exists(
-                'Ornament\Core\Decorator',
+                'Ornament\Core\DecoratorInterface',
                 class_implements($annotations['properties'][$prop]['var'])
             )
             && $value instanceof $annotations['properties'][$prop]['var']
