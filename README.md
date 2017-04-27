@@ -1,5 +1,5 @@
 # Ornament
-PHP5 ORM toolkit
+PHP7 ORM toolkit, core package
 
 ORM is a fickle beast. Many libraries (e.g. Propel, Doctrine, Eloquent etc)
 assume your database should correspond to your models. This is simply not the
@@ -12,26 +12,26 @@ where the data might be stored in a `page` table and a `page_i18n` table for the
 language-specific data.)
 
 Also, the use of extensive and/or complicated config files sucks. (XML? This
-is 2015, people!)
+is 2017, people!)
+
+Ornament's design goals are:
+
+- make it super-simple to use vanilla PHP classes as models;
+- promote the use of models as "dumb" data containers;
+- encourage offloading of storage logic to helpers classes (repositories);
+- make models extensible via an easy plugin mechanism.
 
 ## Installation
-
-### Composer (recommended)
-Add Ornament to your `composer.json` dependencies:
-
 ```sh
-$ composer require ornament/ornament
+$ composer require ornament/core
 ```
 
-### Manual installation
-1. Clone or download the repository;
-2. Register `/path/to/ornament/src` for the namespace `Ornament\\Ornament\\`in
-   your PSR-4 autoloader;
+You'll likely also want auxiliary packages from the `ornament/*` family.
 
 ## Basic usage
 Ornament models (or "entities" if you're used to Doctrine-speak) are really
 nothing more than vanilla PHP classes; there is no need to extend any base
-object of sorts (since you might want to do that in your own framework!).
+object of sorts (since you might want to do that in your own framework).
 
 Ornament is a _toolkit_, so it supplies a number of `Trait`s one can `use` to
 extend your models' behaviour beyond the ordinary.
@@ -41,12 +41,12 @@ The most basic implementation would look as follows:
 ```php
 <?php
 
-use Ornament\Ornament\Model;
+use Ornament\Core\Model;
 
 class MyModel
 {
     // The generic Model trait that bootstraps this class as an Ornament model;
-    // it contains basic functionality.
+    // it contains core functionality.
     use Model;
 
     // All protected properties on a model are considered "handleable" by
@@ -57,189 +57,135 @@ class MyModel
     // be decorated and can only be used verbatim:
     public $name;
     // Private properties are just that: private. They're left alone:
-    private $pdo;
-
-    public function __construct($id)
-    {
-        $this->id = $id;
-    }
+    private $password;
 }
 
-$model = new MyModel(1);
-$model->isNew(); // true
-$model->name = 'Marijn';
-$model->isDirty(); // true
-$model->isPristine(); // false
-$model->isClean(); // false
-$model->name = null;
-$model->isClean(); // true
+// Assuming $source is a handle to a data source (in this case, a PDO
+// statement):
+$model = $source->fetchObject(MyModel::class);
+echo $model->id; // 1
+echo $model->name; // Marijn
+echo $model->password; // Error: private property.
+$model->name = 'Linus'; // Ok; public property.
+$model->id = 2; // Error: read-only property.
 ```
+
+The above example didn't do much yet except exposing the protected `id` property
+as read-only. Note however that Ornament models also prevent mutating undefined
+properties; trying to set anything not explicitly set in the class definition
+will throw an `Error` mimicking PHP's internal error when accessing protected or
+private properties.
 
 ## Annotating and decorating models
-Ornament models work by decorating the original object and its properties. This
-is done (mostly) by specifying _annotations_ on your properties. Models
-implementing the corresponding interfaces are then automatically recognised:
+Ornament doesn't get _really_ useful until you start _decorating_ your models.
+This is done (mostly) by specifying _annotations_ on your properties and
+methods.
+
+Let's look at the simplest annotation possible: type coercion. Let's say we want
+to make sure that the `id` property from the previousl example is an integer:
 
 ```php
 <?php
 
-use Ornament\Ornament\Model;
-use Ornament\Bitflag;
-
-class MyModel implements Bitflag\Decorator
+class MyModel
 {
-    use Model;
-
-    /** @Bitflag foo = 1, bar = 2 */
-    protected $status;
+    //...
+    /** @var int */
+    public $id;
 }
 
-$model = new MyModel;
-$model->status instanceof Bitflag\Property; // true
+//...
+$model->id = 'foo';
+echo $model->id; // (int)0
 ```
 
-There are a number of decorators specified in the various Ornament subpackages.
-Of course you're also free to create your own, as long as they implement the
-`Ornament\Ornament\Decorator` interface.
+This works for all types supported by PHP's `settype` function, and works for
+getting as well as setting.
 
-## Working with decorated properties
-Decorated properties are objects implementing the `Ornament\Ornament\Decorator`
-interface. To access their "raw" values, one can `__toString` them:
+## Getters and setters
+Sometimes you'll want to specify your own getters and setters. No problem;
+define a method and annotate it with `@get PROPERTY` or `@set PROPERTY`:
 
 ```php
 <?php
 
-// ...with the bitflag from the earlier example:
-$model->status->bar = true;
-echo $model->status; // "2"
-```
-
-> For more information on bitflags, see the readme for the `ornament/bitflag`
-> package.
-
-## Adding adapters
-Whilst you could very well extract information from your models and persist them
-somewhere yourself, it is of course handier to let Ornament do that for you. To
-accomplish this, we introduce the concept of _adapters_.
-
-An Adapter is an interface to a storage platform, e.g. a database or a REST
-service. The idea is for your models to not have to care what is stored where,
-and rather let the adapter(s) take care of that.
-
-As an example, let's first install Ornament's `Pdo` adapter:
-
-```sh
-$ composer require ornament/pdo
-```
-
-Next, `use` the `Ornament\Ornament\Persist` trait and add an instance of your
-adapter:
-
-```php
-<?php
-
-use Ornament\Ornament\Model;
-use Ornament\Ornament\Persist;
-
-class SomeTableModel
+class MyModel
 {
-    use Model;
-    use Persist;
+    // ...
 
-    protected $id;
-    public $name;
-
-    public function __construct()
+    /** @get id */
+    public function exampleGetter()
     {
-        global $pdo;
-        $this->addAdapter(new Adapter($pdo));
+        // A random ID between 1 and 100.
+        return rand(1, 100);
+    }
+
+    /** @set id */
+    public function exampleSetter(int $id) : int
+    {
+        // When setting, we multiply the id by 2.
+        return $id * 2;
     }
 }
-
-$stmt = $pdo->query("SELECT * FROM some_table");
-$stmt->setFetchMode(PDO::FETCH_CLASS, 'MyModel');
-$model = $stmt->fetch();
 ```
 
-On construction, the model maps its properties using the corresponding adapter.
-As it is now `Persist`able, we have some additional methods available:
+Note that a _setter_ accepts a single parameter (the thing you want to set) and
+returns what you _actually_ want to set. The internal storage is further handled
+by the Ornament model, so no need to worry about the details.
+
+Getters work for public and protected properties; setters obviously only for
+public properties (since protected properties are read-only).
+
+## Decorator classes
+For more complex types you can also annotate a property with a _decorator
+class_. An example where this could be useful is e.g. to automatically wrap a
+property containing a timezone in an instance of `Carbon\Carbon`.
+
+Specifying a decorator class is as simple as annotating the property with
+`@var CLASSNAME`:
 
 ```php
 <?php
 
-$stmt = $pdo->prepare("SELECT * FROM your_table");
-$stmt->execute();
-$model = new MyModel;
-$model->addDatasource((object)$stmt->fetch());
+class MyModel
+{
+    // ...
 
+    /**
+     * @var CarbonDecorator
+     */
+    public $date;
+}
 ```
 
-Note that this ignores any non-string properties, so you can safely call fetch
-without specifying `PDO::FETCH_ASSOC`.
+    Note that you _must_ use the fully qualified classname; PHP cannot know
+    (well, at least not without doing scary voodoo on your sourcecode) which
+    namespaces were imported.
 
-Using `addDatasource` allows you to specify multiple sources. We'll see how this
-comes in handy later on. For convenience, you can also call `fromDatasource`
-statically on your model:
+Each Decorator class must implement the `Ornament\Core\Decorator` interface. To
+access the underlying value, use the `getSource()` method. Decorators also must
+implement a `__toString()` method to ensure decorated properties can be safely
+used (e.g. in an `echo` statement).
 
-```php
-<?php
-$stmt = $pdo->prepare("SELECT * FROM your_table");
-$stmt->execute();
-$model = MyModel::fromDatasource((object)$stmt->fetch());
+## Loading and persisting models
+This is your job. Wait, what? Yes, Ornament is storage engine agnostic. You may
+use an RDBMS, interface with a JSON API or store your stuff in Excel files for
+all we care. We believe that you shouldn't tie your models to your storage
+engine.
 
-```
+Our personal preference is to use "repositories" that handle this. Of course,
+you're free to make a base class model for yourself which implements `save()`
+or `delete()` methods or whatever.
 
-Note that both `addDatasource` and `fromDatasource` "reset" the model's state,
-i.e. when called the model is assumed to be "existing" afterwards, not "new".
+Having said that, you're not completely on your own. Models may use the
+`Ornament\Core\State` trait to expose some convenience methods:
 
-## Persisting models
-Again, this is your job since we don't want to tell you where to store your
-data. Commonly you would add `save` and `delete` methods to your models, but
-really we don't care.
+- `isDirty()`: was the model changed since the last load?
+- `isModified(string $property)`: specifically check if a property was modified.
+- `isPristine()`: the opposite of `isDirty`.
+- `isNew()`: has this model just been created? E.g. would you store it using
+  `POST` or `PUT`, `UPDATE` or `INSERT` etc.
+- `markPristine()`: manually mark the model as pristine, e.g. after storing it.
 
-The `Model` trait supplies (non-implemented) `save` and `delete` methods. If you
-call them without supplying an actual implementation, an error is triggered.
-
-An alternative option is to offload the persistance logic to a "repository" and
-not have the model worry about it at all.
-
-## Annotating and decorating properties
-If a `getPropertyName` (corresponding to `$model->property_name`) method exists
-on the model, Ornament will call that method to retrieve a property. Similarly,
-a `setPropertyName` method could exist for setting the property. These are
-simple examples of low level _decorators_.
-
-For recurring, more generic decorations you can use _annotations_ in combination
-with decoration-supplying traits. Decorations are applied in order (or in
-reverse order when setting) and you can have as many as you want (though more
-than one or two will only rarely make sense). See the `ornament/bitflag`
-package for a real world example.
-
-If a decorator mutates the value into an object (like the `Bitflag` decoration)
-on setting it is either the result of `__invoke` or else `__toString`. It is
-automatically converted to a scalar prior to passing it to the next decorator.
-
-When `get`ters or `set`ters exist on the model, these are called _instead_ of
-the default logic. Hence, a decoration on a property will _not_ do anything in
-this case (you are of course free to define _either_ a getter or a setter, in
-which case decorations _will_ get applied depending on which one is absent).
-
-The idea is that if you specifically define getters or setters, you're going to
-want to do something special. E.g., if you have properties `firstname` and
-`lastname` you might also want a "virtual" property `fullname` which
-concatenates the two, but decorating this doesn't generally make sense. If you
-really need to morph into a Decorator object, you could just return it from the
-method.
-
-## Related models
-Using the provided `@Model` decorator, you can quickly build a tree of related
-models. The parameter is the classname of the relation, and it will be
-constructed with the field's original value as an argument. It is the related
-model's responsibility to correctly instantiate itself based on this parameter
-_and_ to correctly supply `__invoke` or `__toString` methods.
-
-If the default value for an `@Model` annotated property is an _array_, Ornament
-will return a `Collection` instead. Collections are array-like objects which
-also have an `isDirty` method (true if any of the models in it can be considered
-dirty) and can be saved/deleted like models.
+All these methods are public.
 
