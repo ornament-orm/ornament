@@ -112,6 +112,7 @@ trait Model
             if (isset($annotations['properties'][$prop]['construct'])) {
                 $args = is_array($annotations['properties'][$prop]['construct'])
                     && isset($annotations['properties'][$prop]['construct'][0])
+                    && count($annotations['properties'][$prop]['construct']) > 1
                     ? $annotations['properties'][$prop]['construct']
                     : [$annotations['properties'][$prop]['construct']];
             }
