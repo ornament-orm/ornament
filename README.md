@@ -164,16 +164,20 @@ class MyModel
 
 Each Decorator class must implement the `Ornament\Core\DecoratorInterface`
 interface. Usually this is dnoe by extending `Ornament\Core\Decorator`, but it
-is allowed to write your own implementation. To access the underlying value, use
-the `getSource()` method. Decorators also must implement a `__toString()` method
-to ensure decorated properties can be safely used (e.g. in an `echo` statement).
-For the abstract base decorator, this is implemented as
-`(string)$this->getSource()` which is usually what you want.
+is allowed to write your own implementation. Decorator classes are instantied
+with the internal "status model" (a `StdClass`) and the name of the property to
+be decorated. This allows you to access the rest of the model too, if needed
+(example: a `fullname` decorated field which consists of `firstname` and
+`lastname` properties). To access the underlying value, use the `getSource()`
+method. Decorators also must implement a `__toString()` method to ensure
+decorated properties can be safely used (e.g. in an `echo` statement). For the
+abstract base decorator, this is implemented as `(string)$this->getSource()`
+which is usually what you want.
 
-It is also possible to specify constructor arguments for the decorator using the
-`@construct` annotation. Multiple `@construct` arguments can be set; they will
-be passed as the second, third etc. arguments to the decorator's constructor.
-An exmaple:
+It is also possible to specify extra constructor arguments for the decorator
+using the `@construct` annotation. Multiple `@construct` arguments can be set;
+they will be passed as the second, third etc. arguments to the decorator's
+constructor. An exmaple:
 
 ```php
 <?php
@@ -193,7 +197,7 @@ class MyModel
 
 class SomeDecorator extends Ornament\Core\Decorator
 {
-    public function __construct($foo, int $arg1, int $arg2)
+    public function __construct(StdClass $model, string $property, int $arg1, int $arg2)
     {
         // ...
     }
@@ -202,6 +206,19 @@ class SomeDecorator extends Ornament\Core\Decorator
 
 If your decorator gets _really_ complex and cannot be instantiated using static
 arguments, one should use an `@get`ter.
+
+    Caution: annotations are returned as either "the actual value" or, if
+    multiple annotations of the same name were specific, an array. There is no
+    way for Ornament to differentiate between "multiple constructor arguments"
+    and "a single argument with a simple array". So internally Ornament assumes
+    that if the `@construct` annotation is already an array, with an index `0`
+    set, and a `count()` larger than one, you are specifying multiple
+    constructor arguments. _This check will fail if you meant to specify just a
+    single argument, which happens to be a simple array with multiple elements_
+    (e.g. `[1, 2, 3]`).
+
+    In these corner cases, just supply a second (dummy) constructor argument so
+    the annotations will already be an array by the time Ornament inspects them.
 
 ## Loading and persisting models
 This is your job. Wait, what? Yes, Ornament is storage engine agnostic. You may
@@ -213,15 +230,17 @@ Our personal preference is to use "repositories" that handle this. Of course,
 you're free to make a base class model for yourself which implements `save()`
 or `delete()` methods or whatever.
 
+## Stateful models
 Having said that, you're not completely on your own. Models may use the
 `Ornament\Core\State` trait to expose some convenience methods:
 
 - `isDirty()`: was the model changed since the last load?
 - `isModified(string $property)`: specifically check if a property was modified.
 - `isPristine()`: the opposite of `isDirty`.
-- `isNew()`: has this model just been created? E.g. would you store it using
-  `POST` or `PUT`, `UPDATE` or `INSERT` etc.
 - `markPristine()`: manually mark the model as pristine, e.g. after storing it.
+  Basically this resets the initial state to the current state.
 
-All these methods are public.
+All these methods are public. You can use them in your storage logic to
+determine how to proceed (e.g. skip an expensive `UPDATE` operation if the model
+`isPristine()` anyway).
 

@@ -2,13 +2,15 @@
 
 namespace Ornament\Core;
 
+use StdClass;
+
 abstract class Decorator implements DecoratorInterface
 {
     protected $source;
 
-    public function __construct($source, ...$args)
+    public function __construct(StdClass $model, string $property, ...$args)
     {
-        $this->source = $source;
+        $this->source =& $model->$property;
     }
 
     public function getSource()

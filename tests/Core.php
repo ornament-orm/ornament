@@ -23,16 +23,6 @@ class Core
     }
 
     /**
-     * Core models should correctly report their state as new {?} or dirty {?}.
-     */
-    public function testModelState(CoreModel $model)
-    {
-        yield assert($model->isNew());
-        $model->name = 'Linus';
-        yield assert($model->isDirty());
-    }
-
-    /**
      * Models can successfully register and apply decorations {?}. The second
      * field is decorated using constructor arguments {?}.
      */

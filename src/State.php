@@ -8,24 +8,6 @@ use DomainException;
 trait State
 {
     /**
-     * Returns true if the model wasn't instantied from some existing data
-     * source, otherwise false.
-     *
-     * @return bool
-     * @throws DomainException if the current object is not an Ornament model.
-     */
-    public function isNew() : bool
-    {
-        if (!isset($this->__initial)) {
-            throw new DomainException(sprintf(
-                "%s is not an Ornament model.",
-                get_class($this)
-            ));
-        }
-        return $this->__initial == new StdClass;
-    }
-
-    /**
      * Returns true if any of the model's properties was modified.
      *
      * @return bool
