@@ -2,9 +2,23 @@
 
 namespace Ornament\Core;
 
-interface Decorator
+abstract class Decorator implements DecoratorInterface
 {
-    public function getSource();
-    public function __toString() : string;
+    protected $source;
+
+    public function __construct($source, ...$args)
+    {
+        $this->source = $source;
+    }
+
+    public function getSource()
+    {
+        return $this->source;
+    }
+
+    public function __toString() : string
+    {
+        return (string)$this->getSource();
+    }
 }
 
