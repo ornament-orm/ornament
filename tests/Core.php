@@ -1,9 +1,10 @@
 <?php
 
-namespace Ornament\Ornament\Tests;
+namespace Ornament\Tests;
 
-use Ornament\Ornament\Demo\CoreModel;
-use Ornament\Ornament\Demo\DecoratedModel;
+use Ornament\Demo\CoreModel;
+use Ornament\Demo\DecoratedModel;
+use Error;
 
 /**
  * Tests for core Ornament functionality.
@@ -32,15 +33,38 @@ class Core
     }
 
     /**
-     * Models can successfully register and apply decorations {?}. We can apply
-     * an arbitrary number of decorators which get applied in order {?}.
+     * Models can successfully register and apply decorations {?}.
      */
     public function testDecorators(DecoratedModel $model)
     {
         $model->field = 2;
-        yield assert($model->field == 1);
-        $model->two_decorators = 1;
-        yield assert($model->two_decorators == 4);
+        yield assert((int)"{$model->field}" === 1);
+    }
+
+    /**
+     * If we try to access a private property, an Error is thrown {?}.
+     */
+    public function testPrivate(CoreModel $model)
+    {
+        $e = null;
+        try {
+            $foo = $model->invisible;
+        } catch (Error $e) {
+        }
+        yield assert($e instanceof Error);
+    }
+
+    /**
+     * If we try to modify a protected property, an Error is thrown {?}.
+     */
+    public function testProtected(CoreModel $model)
+    {
+        $e = null;
+        try {
+            $model->id = 2;
+        } catch (Error $e) {
+        }
+        yield assert($e instanceof Error);
     }
 }
 
