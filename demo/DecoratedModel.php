@@ -1,15 +1,35 @@
 <?php
 
-namespace Ornament\Ornament\Demo;
+namespace Ornament\Demo;
 
-use Ornament\Ornament\Model;
+use Ornament\Core\Model;
+use Ornament\Core\Decorator;
+
+class SubtractOne implements Decorator
+{
+    public function __construct($value)
+    {
+        $this->value = $value;
+    }
+
+    public function getSource() : int
+    {
+        return $this->value - 1;
+    }
+
+    public function __toString() : string
+    {
+        return (string)$this->getSource();
+    }
+}
 
 class DecoratedModel
 {
     use Model;
 
     /**
-     * @Test -1
+     * @var Ornament\Demo\SubtractOne
+     * @param -1
      */
     public $field;
 
