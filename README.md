@@ -167,6 +167,39 @@ access the underlying value, use the `getSource()` method. Decorators also must
 implement a `__toString()` method to ensure decorated properties can be safely
 used (e.g. in an `echo` statement).
 
+It is also possible to specify constructor arguments for the decorator using the
+`@construct` annotation. Multiple `@construct` arguments can be set; they will
+be passed as the second, third etc. arguments to the decorator's constructor.
+An exmaple:
+
+```php
+<?php
+
+class MyModel
+{
+    // ...
+
+    /**
+     * @var SomeDecorator
+     * @construct 1
+     * @construct 2
+     */
+    public $foo;
+
+}
+
+class SomeDecorator extends Ornament\Core\Decorator
+{
+    public function __construct($foo, int $arg1, int $arg2)
+    {
+        // ...
+    }
+}
+```
+
+If your decorator gets _really_ complex and cannot be instantiated using static
+arguments, one should use an `@get`ter.
+
 ## Loading and persisting models
 This is your job. Wait, what? Yes, Ornament is storage engine agnostic. You may
 use an RDBMS, interface with a JSON API or store your stuff in Excel files for
