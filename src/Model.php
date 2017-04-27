@@ -49,7 +49,6 @@ trait Model
                 $name = $method->getName();
                 $annotations['methods'][$name] = $anns;
             }
-            $defaults = $reflector->getDefaultProperties();
         }
         if (!isset($this->__state, $this->__initial)) {
             $this->__state = new StdClass;
@@ -59,11 +58,7 @@ trait Model
                 $anns = new Annotations($property);
                 $anns['readOnly'] = $property->isProtected();
                 $annotations['properties'][$name] = $anns;
-                if (isset($this->$name, $defaults[$name])
-                    && $this->$name != $defaults[$name]
-                ) {
-                    $this->__initial->$name = $this->$name;
-                }
+                $this->__initial->$name = $this->$name;
                 $this->__state->$name = $this->$name;
                 unset($this->$name);
             }
@@ -116,11 +111,11 @@ trait Model
             $args = [];
             if (isset($annotations['properties'][$prop]['construct'])) {
                 $args = is_array($annotations['properties'][$prop]['construct'])
-                    && isset($annotations['properties'][$prop['construct'][0])
+                    && isset($annotations['properties'][$prop]['construct'][0])
                     ? $annotations['properties'][$prop]['construct']
                     : [$annotations['properties'][$prop]['construct']];
             }
-            return new $class($this->__state->$prop, ...$args);
+            return new $class($this->__initial, $prop, ...$args);
         }
         return $this->__state->$prop;
     }
