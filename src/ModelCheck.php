@@ -6,7 +6,7 @@ use DomainException;
 
 trait ModelCheck
 {
-    private function check()
+    private function __ornamentCheck()
     {
         if (!isset($this->__initial, $this->__state)) {
             throw new DomainException(sprintf(

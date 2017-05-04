@@ -6,9 +6,7 @@ use StdClass;
 
 trait State
 {
-    use ModelCheck {
-        ModelCheck::check as __ornamentStateModelCheck;
-    }
+    use ModelCheck;
 
     /**
      * Returns true if any of the model's properties was modified.
@@ -18,7 +16,7 @@ trait State
      */
     public function isDirty() : bool
     {
-        $this->__ornamentStateModelCheck();
+        $this->__ornamentCheck();
         foreach ($this->__state as $prop => $val) {
             if ($this->isModified($prop)) {
                 return true;
@@ -35,7 +33,7 @@ trait State
      */
     public function isPristine() : bool
     {
-        $this->__ornamentStateModelCheck();
+        $this->__ornamentCheck();
         return !$this->isDirty();
     }
 
@@ -47,7 +45,7 @@ trait State
      */
     public function isModified($property)
     {
-        $this->__ornamentStateModelCheck();
+        $this->__ornamentCheck();
         if (!isset($this->__state->$property) && isset($this->__initial->$property)) {
             return true;
         }
@@ -68,7 +66,7 @@ trait State
      */
     public function markPristine()
     {
-        $this->__ornamentStateModelCheck();
+        $this->__ornamentCheck();
         $this->__init = clone $this->__state;
     }
 }
