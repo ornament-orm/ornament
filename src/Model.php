@@ -32,22 +32,25 @@ trait Model
 
     private function __ornamentalize() : array
     {
+        static $cache = [];
         static $reflector;
         static $properties;
         static $annotations;
-        if (!isset($reflector, $properties, $annotations)) {
+        $class = get_called_class();
+        if (!isset($cache[$class])) {
+            $cache[$class] = [];
             $annotator = get_class($this);
             while (strpos($annotator, '@anonymous')) {
                 $annotator = (new ReflectionClass($annotator))->getParentClass()->name;
             }
             $reflector = new ReflectionClass($annotator);
             $properties = $reflector->getProperties(ReflectionProperty::IS_PUBLIC | ReflectionProperty::IS_PROTECTED & ~ReflectionProperty::IS_STATIC);
-            $annotations['class'] = new Annotations($reflector);
-            $annotations['methods'] = [];
+            $cache[$class]['class'] = new Annotations($reflector);
+            $cache[$class]['methods'] = [];
             foreach ($reflector->getMethods() as $method) {
                 $anns = new Annotations($method);
                 $name = $method->getName();
-                $annotations['methods'][$name] = $anns;
+                $cache[$class]['methods'][$name] = $anns;
             }
         }
         if (!isset($this->__state, $this->__initial)) {
@@ -57,13 +60,13 @@ trait Model
                 $name = $property->getName();
                 $anns = new Annotations($property);
                 $anns['readOnly'] = $property->isProtected();
-                $annotations['properties'][$name] = $anns;
+                $cache[$class]['properties'][$name] = $anns;
                 $this->__initial->$name = $this->$name;
                 $this->__state->$name = $this->$name;
                 unset($this->$name);
             }
         }
-        return $annotations;
+        return $cache[$class];
     }
 
     /**
