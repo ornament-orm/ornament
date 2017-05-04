@@ -2,6 +2,8 @@
 
 namespace Ornament\Core;
 
+use DomainException;
+
 trait ModelCheck
 {
     private function check()
