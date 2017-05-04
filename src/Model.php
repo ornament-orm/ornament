@@ -49,14 +49,12 @@ trait Model
                 $cache[$class]['methods'][$name] = $anns;
             }
             $properties = $reflector->getProperties(ReflectionProperty::IS_PUBLIC | ReflectionProperty::IS_PROTECTED & ~ReflectionProperty::IS_STATIC);
+            $cache[$class]['properties'] = [];
             foreach ($properties as $property) {
                 $name = $property->getName();
                 $anns = new Annotations($property);
                 $anns['readOnly'] = $property->isProtected();
                 $cache[$class]['properties'][$name] = $anns;
-                $this->__initial->$name = $this->$name;
-                $this->__state->$name = $this->$name;
-                unset($this->$name);
             }
         }
         if (!isset($this->__state, $this->__initial)) {
