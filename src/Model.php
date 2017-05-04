@@ -41,7 +41,6 @@ trait Model
                 $annotator = (new ReflectionClass($annotator))->getParentClass()->name;
             }
             $reflector = new ReflectionClass($annotator);
-            $properties = $reflector->getProperties(ReflectionProperty::IS_PUBLIC | ReflectionProperty::IS_PROTECTED & ~ReflectionProperty::IS_STATIC);
             $cache[$class]['class'] = new Annotations($reflector);
             $cache[$class]['methods'] = [];
             foreach ($reflector->getMethods() as $method) {
@@ -49,15 +48,21 @@ trait Model
                 $name = $method->getName();
                 $cache[$class]['methods'][$name] = $anns;
             }
-        }
-        if (!isset($this->__state, $this->__initial)) {
-            $this->__state = new StdClass;
-            $this->__initial = new StdClass;
+            $properties = $reflector->getProperties(ReflectionProperty::IS_PUBLIC | ReflectionProperty::IS_PROTECTED & ~ReflectionProperty::IS_STATIC);
             foreach ($properties as $property) {
                 $name = $property->getName();
                 $anns = new Annotations($property);
                 $anns['readOnly'] = $property->isProtected();
                 $cache[$class]['properties'][$name] = $anns;
+                $this->__initial->$name = $this->$name;
+                $this->__state->$name = $this->$name;
+                unset($this->$name);
+            }
+        }
+        if (!isset($this->__state, $this->__initial)) {
+            $this->__state = new StdClass;
+            $this->__initial = new StdClass;
+            foreach ($cache[$class]['properties'] as $name => $anns) {
                 $this->__initial->$name = $this->$name;
                 $this->__state->$name = $this->$name;
                 unset($this->$name);
