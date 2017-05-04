@@ -33,9 +33,6 @@ trait Model
     private function __ornamentalize() : array
     {
         static $cache = [];
-        static $reflector;
-        static $properties;
-        static $annotations;
         $class = get_called_class();
         if (!isset($cache[$class])) {
             $cache[$class] = [];
