@@ -6,8 +6,6 @@ use StdClass;
 
 trait State
 {
-    use ModelCheck;
-
     /**
      * Returns true if any of the model's properties was modified.
      *
