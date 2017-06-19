@@ -158,9 +158,9 @@ class MyModel
 }
 ```
 
-    Note that you _must_ use the fully qualified classname; PHP cannot know
-    (well, at least not without doing scary voodoo on your sourcecode) which
-    namespaces were imported.
+> Note that you _must_ use the fully qualified classname; PHP cannot know
+> (well, at least not without doing scary voodoo on your sourcecode) which
+> namespaces were imported.
 
 Each Decorator class must implement the `Ornament\Core\DecoratorInterface`
 interface. Usually this is dnoe by extending `Ornament\Core\Decorator`, but it
