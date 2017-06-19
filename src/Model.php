@@ -32,35 +32,38 @@ trait Model
 
     private function __ornamentalize() : array
     {
-        static $reflector;
-        static $properties;
-        static $annotations;
-        if (!isset($reflector, $properties, $annotations)) {
+        static $cache = [];
+        $class = get_called_class();
+        if (!isset($cache[$class])) {
+            $cache[$class] = [];
             $annotator = get_class($this);
             $reflector = new ReflectionClass($annotator);
-            $properties = $reflector->getProperties(ReflectionProperty::IS_PUBLIC | ReflectionProperty::IS_PROTECTED & ~ReflectionProperty::IS_STATIC);
-            $annotations['class'] = new Annotations($reflector);
-            $annotations['methods'] = [];
+            $cache[$class]['class'] = new Annotations($reflector);
+            $cache[$class]['methods'] = [];
             foreach ($reflector->getMethods() as $method) {
                 $anns = new Annotations($method);
                 $name = $method->getName();
-                $annotations['methods'][$name] = $anns;
+                $cache[$class]['methods'][$name] = $anns;
+            }
+            $properties = $reflector->getProperties(ReflectionProperty::IS_PUBLIC | ReflectionProperty::IS_PROTECTED & ~ReflectionProperty::IS_STATIC);
+            $cache[$class]['properties'] = [];
+            foreach ($properties as $property) {
+                $name = $property->getName();
+                $anns = new Annotations($property);
+                $anns['readOnly'] = $property->isProtected();
+                $cache[$class]['properties'][$name] = $anns;
             }
         }
         if (!isset($this->__state, $this->__initial)) {
             $this->__state = new StdClass;
             $this->__initial = new StdClass;
-            foreach ($properties as $property) {
-                $name = $property->getName();
-                $anns = new Annotations($property);
-                $anns['readOnly'] = $property->isProtected();
-                $annotations['properties'][$name] = $anns;
+            foreach ($cache[$class]['properties'] as $name => $anns) {
                 $this->__initial->$name = $this->$name;
                 $this->__state->$name = $this->$name;
                 unset($this->$name);
             }
         }
-        return $annotations;
+        return $cache[$class];
     }
 
     /**
