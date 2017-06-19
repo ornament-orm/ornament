@@ -163,7 +163,7 @@ class MyModel
 > namespaces were imported.
 
 Each Decorator class must implement the `Ornament\Core\DecoratorInterface`
-interface. Usually this is dnoe by extending `Ornament\Core\Decorator`, but it
+interface. Usually this is done by extending `Ornament\Core\Decorator`, but it
 is allowed to write your own implementation. Decorator classes are instantied
 with the internal "status model" (a `StdClass`) and the name of the property to
 be decorated. This allows you to access the rest of the model too, if needed
@@ -207,18 +207,18 @@ class SomeDecorator extends Ornament\Core\Decorator
 If your decorator gets _really_ complex and cannot be instantiated using static
 arguments, one should use an `@get`ter.
 
-    Caution: annotations are returned as either "the actual value" or, if
-    multiple annotations of the same name were specific, an array. There is no
-    way for Ornament to differentiate between "multiple constructor arguments"
-    and "a single argument with a simple array". So internally Ornament assumes
-    that if the `@construct` annotation is already an array, with an index `0`
-    set, and a `count()` larger than one, you are specifying multiple
-    constructor arguments. _This check will fail if you meant to specify just a
-    single argument, which happens to be a simple array with multiple elements_
-    (e.g. `[1, 2, 3]`).
-
-    In these corner cases, just supply a second (dummy) constructor argument so
-    the annotations will already be an array by the time Ornament inspects them.
+> Caution: annotations are returned as either "the actual value" or, if
+> multiple annotations of the same name were specific, an array. There is no
+> way for Ornament to differentiate between "multiple constructor arguments"
+> and "a single argument with a simple array". So internally Ornament assumes
+> that if the `@construct` annotation is already an array, with an index `0`
+> set, and a `count()` larger than one, you are specifying multiple
+> constructor arguments. _This check will fail if you meant to specify just a
+> single argument, which happens to be a simple array with multiple elements_
+> (e.g. `[1, 2, 3]`).
+>
+> In these corner cases, just supply a second (dummy) constructor argument so
+> the annotations will already be an array by the time Ornament inspects them.
 
 ## Loading and persisting models
 This is your job. Wait, what? Yes, Ornament is storage engine agnostic. You may
