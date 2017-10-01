@@ -9,6 +9,9 @@ use SplObjectStorage;
 use StdClass;
 use Error;
 
+/**
+ * `use` this trait to turn any vanilla class into an Ornament model.
+ */
 trait Model
 {
     /**
@@ -25,11 +28,23 @@ trait Model
      */
     private $__state;
 
+    /**
+     * Constructor.
+     *
+     * @return void
+     */
     public function __construct()
     {
         $this->__ornamentalize();
     }
 
+    /**
+     * Setup the model for decoration using Ornament. Typically called
+     * automatically on construction, but for manual implementations (e.g., a
+     * non-PDO environment) call manually when appropriate.
+     *
+     * @return array Hash of Ornament annotations for this class.
+     */
     private function __ornamentalize() : array
     {
         static $cache = [];
