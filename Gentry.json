@@ -1,6 +1,10 @@
 {
     "src": "src",
-    "tests": "tests",
-    "includePath": [],
-    "ignore": ".*?Controller$"
+    "test": "vendor/bin/toast",
+    "templates": [
+        {
+            "path": "vendor/gentry/toast",
+            "output": "tests/toast"
+        }
+    ]
 }
