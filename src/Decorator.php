@@ -2,7 +2,7 @@
 
 namespace Ornament\Core;
 
-use StdClass;
+use stdClass;
 
 abstract class Decorator implements DecoratorInterface
 {
@@ -17,7 +17,7 @@ abstract class Decorator implements DecoratorInterface
      * @param mixed ...$args
      * @return void
      */
-    public function __construct(StdClass $model, string $property, ...$args)
+    public function __construct(stdClass $model, string $property, ...$args)
     {
         $this->source =& $model->$property;
     }
