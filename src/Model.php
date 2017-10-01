@@ -152,7 +152,7 @@ trait Model
      * @param string $prop The property to set.
      * @param mixed $value The new value.
      * @return void
-     * @throws Error if the property is unknown or immutable.
+     * @throws Error if the property is private, unknown or read-only.
     */
     public function __set(string $prop, $value)
     {
@@ -160,7 +160,7 @@ trait Model
             $debug = debug_backtrace()[0];
             throw new Error(
                 sprintf(
-                    "Cannot access private property %s::%s in %s:%d",
+                    "Cannot access private or unknown property %s::%s in %s:%d",
                     get_class($this),
                     $prop,
                     $debug['file'],
@@ -181,13 +181,14 @@ trait Model
             } while ($debug['function'] == '__set' && $debugs);
 
             $error = function () use ($debugs, $prop) {
+                $debug = $debugs[1] ?? $debugs[0];
                 throw new Error(
                     sprintf(
                         "Cannot access protected property %s::%s in %s:%d",
                         get_class($this),
                         $prop,
-                        $debugs[1]['file'],
-                        $debugs[1]['line']
+                        $debug['file'],
+                        $debug['line']
                     ),
                     0
                 );
