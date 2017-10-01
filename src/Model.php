@@ -80,7 +80,7 @@ trait Model
      * @return mixed The property's (optionally computed) value.
      * @throws Error if the property is unknown.
      */
-    public function __get($prop)
+    public function __get(string $prop)
     {
         $annotations = $this->__ornamentalize();
         foreach ($annotations['methods'] as $name => $anns) {
@@ -139,7 +139,7 @@ trait Model
      * @return void
      * @throws Error if the property is unknown or immutable.
     */
-    public function __set($prop, $value)
+    public function __set(string $prop, $value)
     {
         if (!property_exists($this->__state, $prop)) {
             $debug = debug_backtrace()[0];
@@ -156,17 +156,40 @@ trait Model
         }
         $annotations = $this->__ornamentalize();
         if ($annotations['properties'][$prop]['readOnly']) {
-            $debug = debug_backtrace()[0];
-            throw new Error(
-                sprintf(
-                    "Cannot access protected property %s::%s in %s:%d",
-                    get_class($this),
-                    $prop,
-                    $debug['file'],
-                    $debug['line']
-                ),
-                0
-            );
+            // Modifying a readOnly (protected) property is only valid from
+            // within the same class context. This is a hacky way to check
+            // that, since `__set` obviously by default means "inside class
+            // context".
+            $debugs = debug_backtrace();
+            do {
+                $debug = array_shift($debugs);
+            } while ($debug['function'] == '__set' && $debugs);
+
+            $error = function () use ($debugs, $prop) {
+                throw new Error(
+                    sprintf(
+                        "Cannot access protected property %s::%s in %s:%d",
+                        get_class($this),
+                        $prop,
+                        $debugs[1]['file'],
+                        $debugs[1]['line']
+                    ),
+                    0
+                );
+            };
+
+            // No class context? That's definitely illegal.
+            if (!isset($debug['class'])) {
+                $error();
+            }
+
+            // Is the calling class context not either ourselves, or a subclass?
+            // That's also illegal.
+            $reflection = new ReflectionClass($debug['class']);
+            $myclass = get_class($this);
+            if (!($reflection->getName() == $myclass || $reflection->isSubclassOf($myclass))) {
+                $error();
+            }
         }
         if (isset($annotations['properties'][$prop]['var'])
             && array_key_exists(
@@ -209,7 +232,7 @@ trait Model
      * @param string $prop The property to check.
      * @return boolean True if set, otherwise false.
      */
-    public function __isset($prop) : bool
+    public function __isset(string $prop) : bool
     {
         return property_exists($this->__state, $prop)
             && !is_null($this->__state->$prop);
