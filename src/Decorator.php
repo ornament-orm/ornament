@@ -19,7 +19,7 @@ abstract class Decorator implements DecoratorInterface
      */
     public function __construct(stdClass $model, string $property, ...$args)
     {
-        $this->source =& $model->$property;
+        $this->source = $model->$property;
     }
 
     /**
