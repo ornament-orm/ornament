@@ -121,6 +121,7 @@ trait Model
                 'Ornament\Core\DecoratorInterface',
                 class_implements($annotations['properties'][$prop]['var'])
             )
+            && !($this->__state->$prop instanceof $annotations['properties'][$prop]['var'])
         ) {
             $class = $annotations['properties'][$prop]['var'];
             $args = [];
