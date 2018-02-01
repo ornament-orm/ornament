@@ -131,7 +131,7 @@ trait Model
                     ? $annotations['properties'][$prop]['construct']
                     : [$annotations['properties'][$prop]['construct']];
             }
-            return new $class($this->__state, $prop, ...$args);
+            $this->__state->$prop = new $class($this->__state, $prop, ...$args);
         }
         return $this->__state->$prop;
     }
