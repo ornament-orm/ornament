@@ -57,7 +57,7 @@ trait State
      */
     public function markPristine()
     {
-        $this->__init = clone $this->__state;
+        $this->__initial = clone $this->__state;
     }
 }
 
