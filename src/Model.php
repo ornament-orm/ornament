@@ -110,8 +110,8 @@ trait Model
                     "Cannot access private property %s::%s in %s:%d",
                     get_class($this),
                     $prop,
-                    $debug['file'],
-                    $debug['line']
+                    $debug['file'] ?? 'unknown',
+                    $debug['line'] ?? 'unknown'
                 ),
                 0
             );
@@ -134,6 +134,9 @@ trait Model
                     : [$annotations['properties'][$prop]['construct']];
             }
             $this->__state->$prop = new $class($this->__state, $prop, ...$args);
+        }
+        if ($this->checkBaseType($annotations['properties'][$prop])) {
+            $this->__state->$prop = settype($this->__state->$prop, $annotations['properties'][$prop]['var']);
         }
         return $this->__state->$prop;
     }
@@ -224,20 +227,7 @@ trait Model
                 break;
             }
         }
-        if (isset($annotations['properties'][$prop]['var'])
-            && in_array(
-                $annotations['properties'][$prop]['var'],
-                [
-                    'bool',
-                    'int',
-                    'float',
-                    'string',
-                    'array',
-                    'object',
-                    'null',
-                ]
-            )
-        ) {
+        if ($this->checkBaseType($annotations['properties'][$prop])) {
             $value = settype($value, $annotations['properties'][$prop]['var']);
         }
         $this->__state->$prop = $value;
@@ -266,6 +256,19 @@ trait Model
      */
     public function __index($index)
     {
+    }
+
+    /**
+     * Internal helper method to check if the given property is annotated as one
+     * of PHP's internal base types (int, float etc).
+     *
+     * @param zpt\anno\Annotations $prop
+     * @return bool
+     */
+    protected function checkBaseType(Annotations $prop) : bool
+    {
+        static $baseTypes = ['bool', 'int', 'float', 'string', 'array', 'object', 'null'];
+        return in_array($prop['var'] ?? null, $baseTypes);
     }
 }
 
