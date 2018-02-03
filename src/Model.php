@@ -135,7 +135,7 @@ trait Model
             }
             $this->__state->$prop = new $class($this->__state, $prop, ...$args);
         }
-        if ($this->checkBaseType($annotations['properties'][$prop])) {
+        if ($this->checkBaseType($annotations['properties'][$prop]) && !is_null($this->__state->$prop)) {
             settype($this->__state->$prop, $annotations['properties'][$prop]['var']);
         }
         return $this->__state->$prop;
@@ -227,7 +227,7 @@ trait Model
                 break;
             }
         }
-        if ($this->checkBaseType($annotations['properties'][$prop])) {
+        if ($this->checkBaseType($annotations['properties'][$prop]) && !is_null($value)) {
             settype($value, $annotations['properties'][$prop]['var']);
         }
         $this->__state->$prop = $value;
