@@ -136,7 +136,7 @@ trait Model
             $this->__state->$prop = new $class($this->__state, $prop, ...$args);
         }
         if ($this->checkBaseType($annotations['properties'][$prop])) {
-            $this->__state->$prop = settype($this->__state->$prop, $annotations['properties'][$prop]['var']);
+            settype($this->__state->$prop, $annotations['properties'][$prop]['var']);
         }
         return $this->__state->$prop;
     }
@@ -228,7 +228,7 @@ trait Model
             }
         }
         if ($this->checkBaseType($annotations['properties'][$prop])) {
-            $value = settype($value, $annotations['properties'][$prop]['var']);
+            settype($value, $annotations['properties'][$prop]['var']);
         }
         $this->__state->$prop = $value;
     }
