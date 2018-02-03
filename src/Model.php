@@ -117,6 +117,7 @@ trait Model
             );
         }
         if (isset($annotations['properties'][$prop]['var'])
+            && class_exists($annotations['properties'][$prop]['var'])
             && array_key_exists(
                 'Ornament\Core\DecoratorInterface',
                 class_implements($annotations['properties'][$prop]['var'])
