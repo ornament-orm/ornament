@@ -103,20 +103,21 @@ trait Model
                 return call_user_func([$this, $name]);
             }
         }
-        if (!property_exists($this->__state, $prop)) {
+        if (!property_exists($this->__state ?? new StdClass, $prop)) {
             $debug = debug_backtrace()[0];
             throw new Error(
                 sprintf(
                     "Cannot access private property %s::%s in %s:%d",
                     get_class($this),
                     $prop,
-                    $debug['file'],
-                    $debug['line']
+                    $debug['file'] ?? 'unknown',
+                    $debug['line'] ?? 'unknown'
                 ),
                 0
             );
         }
         if (isset($annotations['properties'][$prop]['var'])
+            && class_exists($annotations['properties'][$prop]['var'])
             && array_key_exists(
                 'Ornament\Core\DecoratorInterface',
                 class_implements($annotations['properties'][$prop]['var'])
@@ -133,6 +134,9 @@ trait Model
                     : [$annotations['properties'][$prop]['construct']];
             }
             $this->__state->$prop = new $class($this->__state, $prop, ...$args);
+        }
+        if ($this->checkBaseType($annotations['properties'][$prop]) && !is_null($this->__state->$prop)) {
+            settype($this->__state->$prop, $annotations['properties'][$prop]['var']);
         }
         return $this->__state->$prop;
     }
@@ -157,15 +161,15 @@ trait Model
     */
     public function __set(string $prop, $value)
     {
-        if (!property_exists($this->__state, $prop)) {
+        if (!property_exists($this->__state ?? new StdClass, $prop)) {
             $debug = debug_backtrace()[0];
             throw new Error(
                 sprintf(
                     "Cannot access private or unknown property %s::%s in %s:%d",
                     get_class($this),
                     $prop,
-                    $debug['file'],
-                    $debug['line']
+                    $debug['file'] ?? 'unknown',
+                    $debug['line'] ?? 'unknown'
                 ),
                 0
             );
@@ -209,6 +213,7 @@ trait Model
             }
         }
         if (isset($annotations['properties'][$prop]['var'])
+            && class_exists($annotations['properties'][$prop]['var'])
             && array_key_exists(
                 'Ornament\Core\DecoratorInterface',
                 class_implements($annotations['properties'][$prop]['var'])
@@ -223,21 +228,8 @@ trait Model
                 break;
             }
         }
-        if (isset($annotations['properties'][$prop]['var'])
-            && in_array(
-                $annotations['properties'][$prop]['var'],
-                [
-                    'bool',
-                    'int',
-                    'float',
-                    'string',
-                    'array',
-                    'object',
-                    'null',
-                ]
-            )
-        ) {
-            $value = settype($value, $annotations['properties'][$prop]['var']);
+        if ($this->checkBaseType($annotations['properties'][$prop]) && !is_null($value)) {
+            settype($value, $annotations['properties'][$prop]['var']);
         }
         $this->__state->$prop = $value;
     }
@@ -265,6 +257,19 @@ trait Model
      */
     public function __index($index)
     {
+    }
+
+    /**
+     * Internal helper method to check if the given property is annotated as one
+     * of PHP's internal base types (int, float etc).
+     *
+     * @param zpt\anno\Annotations $prop
+     * @return bool
+     */
+    protected function checkBaseType(Annotations $prop) : bool
+    {
+        static $baseTypes = ['bool', 'int', 'float', 'string', 'array', 'object', 'null'];
+        return in_array($prop['var'] ?? null, $baseTypes);
     }
 }
 
