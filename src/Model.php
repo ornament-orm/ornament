@@ -159,7 +159,7 @@ trait Model
      * @return void
      * @throws Error if the property is private, unknown or read-only.
     */
-    public function __set(string $prop, $value)
+    public function __set(string $prop, $value) : void
     {
         if (!property_exists($this->__state ?? new StdClass, $prop)) {
             $debug = debug_backtrace()[0];
@@ -255,7 +255,7 @@ trait Model
      * @param integer $index The current index in the array.
      * @return void
      */
-    public function __index($index)
+    public function __index(int $index) : void
     {
     }
 
