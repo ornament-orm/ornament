@@ -34,9 +34,10 @@ trait State
     /**
      * Returns true if a specific property on the model is dirty.
      *
+     * @param string $property
      * @return bool
      */
-    public function isModified($property)
+    public function isModified(string $property) : bool
     {
         if (!isset($this->__state->$property) && isset($this->__initial->$property)) {
             return true;
@@ -55,7 +56,7 @@ trait State
      *
      * @return void
      */
-    public function markPristine()
+    public function markPristine() : void
     {
         $this->__initial = clone $this->__state;
     }
