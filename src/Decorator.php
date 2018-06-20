@@ -12,14 +12,14 @@ abstract class Decorator implements DecoratorInterface
      * Constructor. Pass in the parent model, property name and optional extra
      * arguments (not used by default, but implementing classes might).
      *
-     * @param stdClass $model
+     * @param object $state
      * @param string $property
      * @param mixed ...$args
      * @return void
      */
-    public function __construct(stdClass $model, string $property, ...$args)
+    public function __construct(object $state, string $property, ...$args)
     {
-        $this->source = $model->$property;
+        $this->source = $state->$property;
     }
 
     /**
