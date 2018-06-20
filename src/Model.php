@@ -156,10 +156,10 @@ trait Model
      *
      * @param string $prop The property to set.
      * @param mixed $value The new value.
-     * @return void
+     * @return mixed
      * @throws Error if the property is private, unknown or read-only.
     */
-    public function __set(string $prop, $value) : void
+    public function __set(string $prop, $value)
     {
         if (!property_exists($this->__state ?? new StdClass, $prop)) {
             $debug = debug_backtrace()[0];
@@ -232,6 +232,7 @@ trait Model
             settype($value, $annotations['properties'][$prop]['var']);
         }
         $this->__state->$prop = $value;
+        return $value;
     }
     
     /**
