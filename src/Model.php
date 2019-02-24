@@ -161,6 +161,64 @@ trait Model
     */
     public function __set(string $prop, $value)
     {
+        $annotations = $this->__ornamentalize();
+        foreach ($annotations['methods'] as $name => $anns) {
+            if (isset($anns['set']) && $anns['set'] == $prop) {
+                return call_user_func([$this, $name], $value);
+            }
+        }
+        if (isset($annotations['properties'][$prop])) {
+            if ($annotations['properties'][$prop]['readOnly']) {
+                // Modifying a readOnly (protected) property is only valid from
+                // within the same class context. This is a hacky way to check
+                // that, since `__set` obviously by default means "inside class
+                // context".
+                $debugs = debug_backtrace();
+                do {
+                    $debug = array_shift($debugs);
+                } while ($debug['function'] == '__set' && $debugs);
+
+                $error = function () use ($debugs, $prop) {
+                    $debug = $debugs[1] ?? $debugs[0];
+                    throw new Error(
+                        sprintf(
+                            "Cannot access protected property %s::%s in %s:%d",
+                            get_class($this),
+                            $prop,
+                            $debug['file'],
+                            $debug['line']
+                        ),
+                        0
+                    );
+                };
+
+                // No class context? That's definitely illegal.
+                if (!isset($debug['class'])) {
+                    $error();
+                }
+
+                // Is the calling class context not either ourselves, or a subclass?
+                // That's also illegal.
+                $reflection = new ReflectionClass($debug['class']);
+                $myclass = get_class($this);
+                if (!($reflection->getName() == $myclass || $reflection->isSubclassOf($myclass))) {
+                    $error();
+                }
+            }
+            if (isset($annotations['properties'][$prop]['var'])
+                && class_exists($annotations['properties'][$prop]['var'])
+                && array_key_exists(
+                    'Ornament\Core\DecoratorInterface',
+                    class_implements($annotations['properties'][$prop]['var'])
+                )
+                && $value instanceof $annotations['properties'][$prop]['var']
+            ) {
+                $value = $value->getSource();
+            }
+            if ($this->checkBaseType($annotations['properties'][$prop]) && !is_null($value)) {
+                settype($value, $annotations['properties'][$prop]['var']);
+            }
+        }
         if (!property_exists($this->__state ?? new StdClass, $prop)) {
             $debug = debug_backtrace()[0];
             throw new Error(
@@ -173,63 +231,6 @@ trait Model
                 ),
                 0
             );
-        }
-        $annotations = $this->__ornamentalize();
-        if ($annotations['properties'][$prop]['readOnly']) {
-            // Modifying a readOnly (protected) property is only valid from
-            // within the same class context. This is a hacky way to check
-            // that, since `__set` obviously by default means "inside class
-            // context".
-            $debugs = debug_backtrace();
-            do {
-                $debug = array_shift($debugs);
-            } while ($debug['function'] == '__set' && $debugs);
-
-            $error = function () use ($debugs, $prop) {
-                $debug = $debugs[1] ?? $debugs[0];
-                throw new Error(
-                    sprintf(
-                        "Cannot access protected property %s::%s in %s:%d",
-                        get_class($this),
-                        $prop,
-                        $debug['file'],
-                        $debug['line']
-                    ),
-                    0
-                );
-            };
-
-            // No class context? That's definitely illegal.
-            if (!isset($debug['class'])) {
-                $error();
-            }
-
-            // Is the calling class context not either ourselves, or a subclass?
-            // That's also illegal.
-            $reflection = new ReflectionClass($debug['class']);
-            $myclass = get_class($this);
-            if (!($reflection->getName() == $myclass || $reflection->isSubclassOf($myclass))) {
-                $error();
-            }
-        }
-        if (isset($annotations['properties'][$prop]['var'])
-            && class_exists($annotations['properties'][$prop]['var'])
-            && array_key_exists(
-                'Ornament\Core\DecoratorInterface',
-                class_implements($annotations['properties'][$prop]['var'])
-            )
-            && $value instanceof $annotations['properties'][$prop]['var']
-        ) {
-            $value = $value->getSource();
-        }
-        foreach ($annotations['methods'] as $name => $anns) {
-            if (isset($anns['set']) && $anns['set'] == $prop) {
-                $value = call_user_func([$this, $name], $value);
-                break;
-            }
-        }
-        if ($this->checkBaseType($annotations['properties'][$prop]) && !is_null($value)) {
-            settype($value, $annotations['properties'][$prop]['var']);
         }
         $this->__state->$prop = $value;
         return $value;
