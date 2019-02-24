@@ -244,6 +244,12 @@ trait Model
      */
     public function __isset(string $prop) : bool
     {
+        $annotations = $this->__ornamentalize();
+        foreach ($annotations['methods'] as $name => $anns) {
+            if (isset($anns['get']) && $anns['get'] == $prop) {
+                return true;
+            }
+        }
         return property_exists($this->__state, $prop)
             && !is_null($this->__state->$prop);
     }
