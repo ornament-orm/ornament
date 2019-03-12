@@ -136,6 +136,9 @@ trait Model
             $this->__state->$prop = new $class($this->__state, $prop, ...$args);
         }
         if ($this->checkBaseType($annotations['properties'][$prop]) && !is_null($this->__state->$prop)) {
+            if (is_object($this->__state->$prop) && method_exists($this->__state->$prop, '__toString')) {
+                $this->__state->$prop = "{$this->__state->$prop}";
+            }
             settype($this->__state->$prop, $annotations['properties'][$prop]['var']);
         }
         return $this->__state->$prop;
@@ -216,6 +219,9 @@ trait Model
                 $value = $value->getSource();
             }
             if ($this->checkBaseType($annotations['properties'][$prop]) && !is_null($value)) {
+                if (is_object($value) && method_exists($value, '__toString')) {
+                    $value = "$value";
+                }
                 settype($value, $annotations['properties'][$prop]['var']);
             }
         }
