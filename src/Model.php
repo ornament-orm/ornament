@@ -121,11 +121,13 @@ trait Model
                 0
             );
         }
-        if ($this->checkBaseType($annotations['properties'][$prop]) && !is_null($this->__state->$prop)) {
-            if (is_object($this->__state->$prop) && method_exists($this->__state->$prop, '__toString')) {
-                $this->__state->$prop = "{$this->__state->$prop}";
+        if ($this->checkBaseType($annotations['properties'][$prop])) {
+            if (!is_null($this->__state->$prop)) {
+                if (is_object($this->__state->$prop) && method_exists($this->__state->$prop, '__toString')) {
+                    $this->__state->$prop = "{$this->__state->$prop}";
+                }
+                settype($this->__state->$prop, $annotations['properties'][$prop]['var']);
             }
-            settype($this->__state->$prop, $annotations['properties'][$prop]['var']);
         } elseif (isset($annotations['properties'][$prop]['var'])) {
             if (!class_exists($annotations['properties'][$prop]['var'])) {
                 throw new DecoratorClassNotFoundException($annotations['properties'][$prop]['var']);
