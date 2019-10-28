@@ -94,6 +94,11 @@ trait Model
      * @param string $prop Name of the property.
      * @return mixed The property's (optionally computed) value.
      * @throws Error if the property is unknown.
+     * @throws Ornament\Core\DecoratorClassNotFoundException if the requested
+     *  decorator class does not exists.
+     * @throws Ornament\Core\DecoratorClassMustImplementDecoratorInterfaceException
+     *  if the request decorator class does not implement the required
+     *  interface.
      */
     public function __get(string $prop)
     {
@@ -116,30 +121,30 @@ trait Model
                 0
             );
         }
-        if (isset($annotations['properties'][$prop]['var'])
-            && class_exists($annotations['properties'][$prop]['var'])
-            && array_key_exists(
-                'Ornament\Core\DecoratorInterface',
-                class_implements($annotations['properties'][$prop]['var'])
-            )
-            && !($this->__state->$prop instanceof $annotations['properties'][$prop]['var'])
-        ) {
-            $class = $annotations['properties'][$prop]['var'];
-            $args = [];
-            if (isset($annotations['properties'][$prop]['construct'])) {
-                $args = is_array($annotations['properties'][$prop]['construct'])
-                    && isset($annotations['properties'][$prop]['construct'][0])
-                    && count($annotations['properties'][$prop]['construct']) > 1
-                    ? $annotations['properties'][$prop]['construct']
-                    : [$annotations['properties'][$prop]['construct']];
-            }
-            $this->__state->$prop = new $class($this->__state, $prop, ...$args);
-        }
         if ($this->checkBaseType($annotations['properties'][$prop]) && !is_null($this->__state->$prop)) {
             if (is_object($this->__state->$prop) && method_exists($this->__state->$prop, '__toString')) {
                 $this->__state->$prop = "{$this->__state->$prop}";
             }
             settype($this->__state->$prop, $annotations['properties'][$prop]['var']);
+        } elseif (isset($annotations['properties'][$prop]['var'])) {
+            if (!class_exists($annotations['properties'][$prop]['var'])) {
+                throw new DecoratorClassNotFoundException($annotations['properties'][$prop]['var']);
+            }
+            if (!array_key_exists('Ornament\Core\DecoratorInterface', class_implements($annotations['properties'][$prop]['var']))) {
+                throw new DecoratorClassMustImplementDecoratorInterfaceException($annotations['properties'][$prop]['var']);
+            }
+            if (!($this->__state->$prop instanceof $annotations['properties'][$prop]['var'])) {
+                $class = $annotations['properties'][$prop]['var'];
+                $args = [];
+                if (isset($annotations['properties'][$prop]['construct'])) {
+                    $args = is_array($annotations['properties'][$prop]['construct'])
+                        && isset($annotations['properties'][$prop]['construct'][0])
+                        && count($annotations['properties'][$prop]['construct']) > 1
+                        ? $annotations['properties'][$prop]['construct']
+                        : [$annotations['properties'][$prop]['construct']];
+                }
+                $this->__state->$prop = new $class($this->__state, $prop, ...$args);
+            }
         }
         return $this->__state->$prop;
     }
