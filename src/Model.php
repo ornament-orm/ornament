@@ -31,10 +31,16 @@ trait Model
     /**
      * Constructor.
      *
+     * @param array|Traversable|null $input
      * @return void
      */
-    public function __construct()
+    public function __construct($input = null)
     {
+        if (isset($input) && is_iterable($input)) {
+            foreach ($input as $key => $value) {
+                $this->$key = $value;
+            }
+        }
         $this->__ornamentalize();
     }
 
