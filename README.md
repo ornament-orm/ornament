@@ -49,20 +49,20 @@ class MyModel
     // it contains core functionality.
     use Model;
 
-    // All protected properties on a model are considered "handleable" by
-    // Ornament. They can be decorated (see below) and are exposed for getting
-    // and setting via the Model API:
+    // All protected properties on a model are considered read-only.
     protected $id;
-    // Public properties are also potentially handleable, but they cannot
-    // be decorated and can only be used verbatim:
+
+    // Public properties are read/write. To auto-decorate during setting, use
+    // the `Model::set()` method.
     public $name;
+
     // Private properties are just that: private. They're left alone:
     private $password;
 }
 
 // Assuming $source is a handle to a data source (in this case, a PDO
 // statement):
-$model = $source->fetchObject(MyModel::class);
+$model = MyModel::fromIterable($source->fetch(PDO::FETCH_ASSOC));
 echo $model->id; // 1
 echo $model->name; // Marijn
 echo $model->password; // Error: private property.
@@ -78,8 +78,8 @@ private properties.
 
 ## Annotating and decorating models
 Ornament doesn't get _really_ useful until you start _decorating_ your models.
-This is done (mostly) by specifying _annotations_ on your properties and
-methods.
+This is done (mostly) by specifying _annotations_ (or, as of PHP7.4, type
+hinting for properties) on your properties and methods.
 
 Let's look at the simplest annotation possible: type coercion. Let's say we want
 to make sure that the `id` property from the previousl example is an integer:
@@ -92,15 +92,17 @@ class MyModel
     //...
     /** @var int */
     public $id;
+
+    // Or, as of PHP7.4:
+    public int $id;
 }
 
 //...
-$model->id = 'foo';
-echo $model->id; // (int)0
+$model->set('id', '1');
+echo $model->id; // (int)1
 ```
 
-This works for all types supported by PHP's `settype` function, and works for
-getting as well as setting.
+This works for all types supported by PHP's `settype` function.
 
 ## Getters and setters
 Sometimes you'll want to specify your own getters and setters. No problem;
@@ -152,7 +154,7 @@ class MyModel
     // ...
 
     /**
-     * @var CarbonDecorator
+     * @var Nesbot\Carbon\Carbon
      */
     public $date;
 }
