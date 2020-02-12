@@ -1,7 +1,6 @@
 <?php
 
-use Ornament\Demo\CoreModel;
-use Ornament\Demo\DecoratedModel;
+use Ornament\Demo\{ CoreModel, CoreModel74, DecoratedModel, DecoratedModel74, SubtractOne };
 use Gentry\Gentry\Wrapper;
 
 /**
@@ -13,7 +12,7 @@ return function () : Generator {
      * via magic getters and setters but not private ones.
      */
     yield function () {
-        $model = Wrapper::createObject(CoreModel::class);
+        $model = Wrapper::createObject((float)phpversion() >= 7.4 ? CoreModel74::class : CoreModel::class);
         assert(isset($model->id));
         assert($model->id == 1);
         assert(!isset($model->invisible));
@@ -24,10 +23,10 @@ return function () : Generator {
      * field is decorated using constructor arguments.
      */
     yield function () {
-        $model = Wrapper::createObject(DecoratedModel::class);
-        $model->field = 2;
+        $model = Wrapper::createObject((float)phpversion() >= 7.4 ? DecoratedModel74::class : DecoratedModel::class);
+        $model->set('field', 2);
         assert((int)"{$model->field}" === 1);
-        $model->anotherField = 1;
+        $model->set('anotherField', 1);
         assert((int)"{$model->anotherField}" === 6);
     };
 
@@ -35,7 +34,7 @@ return function () : Generator {
      * If we try to access a private property, an Error is thrown.
      */
     yield function () {
-        $model = Wrapper::createObject(CoreModel::class);
+        $model = Wrapper::createObject((float)phpversion() >= 7.4 ? CoreModel74::class : CoreModel::class);
         $e = null;
         try {
             $foo = $model->invisible;
@@ -48,7 +47,7 @@ return function () : Generator {
      * If we try to modify a protected property, an Error is thrown.
      */
     yield function () {
-        $model = Wrapper::createObject(CoreModel::class);
+        $model = Wrapper::createObject((float)phpversion() >= 7.4 ? CoreModel74::class : CoreModel::class);
         $e = null;
         try {
             $model->id = 2;
