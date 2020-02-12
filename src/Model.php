@@ -190,7 +190,7 @@ trait Model
         } catch (ReflectionException $e) {
             throw new Error("Tried to get private or non-existing property $prop on ".get_class($this));
         }
-        if (($reflection->isPublic() || $reflection->isProtected()) && !$reflection->isAbstract()) {
+        if (($reflection->isPublic() || $reflection->isProtected()) && !$reflection->isStatic()) {
             return $this->$prop;
         }
     }
