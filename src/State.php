@@ -13,7 +13,7 @@ trait State
      */
     public function isDirty() : bool
     {
-        foreach ($this->__state as $prop => $val) {
+        foreach ($this->__initial as $prop => $val) {
             if ($this->isModified($prop)) {
                 return true;
             }
@@ -39,16 +39,7 @@ trait State
      */
     public function isModified(string $property) : bool
     {
-        if (!isset($this->__state->$property) && isset($this->__initial->$property)) {
-            return true;
-        }
-        if (isset($this->__state->$property) && !isset($this->__initial->$property)) {
-            return true;
-        }
-        if ($this->__state->$property != $this->__initial->$property) {
-            return true;
-        }
-        return false;
+        return $this->__initial->$property !== $this->$property;
     }
 
     /**
@@ -58,7 +49,7 @@ trait State
      */
     public function markPristine() : void
     {
-        $this->__initial = clone $this->__state;
+        $this->__initial = clone $this;
     }
 }
 
