@@ -94,9 +94,18 @@ trait Model
      * @param string $field
      * @param mixed $value
      * @return void
+     * @throws Error if the property in question is non-public or static.
      */
     public function set(string $field, $value) : void
     {
+        $reflection = new ReflectionClass($this);
+        $property = $reflection->getProperty($field);
+        if (!$property->isPublic()) {
+            throw new Error("Only public properties can be `set` ($field in ".get_class($this).")");
+        }
+        if ($property->isStatic()) {
+            throw new Error("Only non-static properties can be `set` ($field in ".get_class($this).")");
+        }
         $this->$field = self::ornamentalize(new ReflectionClass($this), $field, $value);
     }
 
@@ -181,7 +190,7 @@ trait Model
         } catch (ReflectionException $e) {
             throw new Error("Tried to get private or non-existing property $prop on ".get_class($this));
         }
-        if ($reflection->isPublic() || $reflection->isProtected()) {
+        if (($reflection->isPublic() || $reflection->isProtected()) && !$reflection->isAbstract()) {
             return $this->$prop;
         }
     }
