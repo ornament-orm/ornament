@@ -20,5 +20,14 @@ class DecoratedModel74
      * @construct 3
      */
     public DecoratorWithConstructorArguments $anotherField;
+
+    /**
+     * @get virtual_property
+     * @return string
+     */
+    protected function getVirtualPropertyDemo() : string
+    {
+        return "{$this->field} {$this->anotherField}";
+    }
 }
 
