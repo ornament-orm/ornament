@@ -127,6 +127,10 @@ trait Model
         try {
             $reflection = new ReflectionProperty($this, $prop);
         } catch (ReflectionException $e) {
+            $cache = $this->__getModelPropertyDecorations();
+            if (isset($cache['methods'][$prop])) {
+                return $this->{$cache['methods'][$prop]}();
+            }
             throw new Error("Tried to get non-existing property $prop on ".get_class($this));
         }
         if (($reflection->isPublic() || $reflection->isProtected()) && !$reflection->isAbstract()) {
@@ -204,7 +208,7 @@ trait Model
      */
     protected function ornamentalize(string $field, $value)
     {
-        $cache = $this->__getModelPropertyDecorations($field);
+        $cache = $this->__getModelPropertyDecorations();
         if (self::checkBaseType($cache['properties'][$field]['var'])) {
             // As of PHP 7.4, type coercion is implicit when properties have
             // been correctly type hinted.
@@ -231,7 +235,7 @@ trait Model
         }
     }
 
-    protected function __getModelPropertyDecorations(string $field) : array
+    protected function __getModelPropertyDecorations() : array
     {
         static $cache = [];
         if (!$cache) {
@@ -240,8 +244,9 @@ trait Model
             $cache['methods'] = [];
             foreach ($reflection->getMethods() as $method) {
                 $anns = new Annotations($method);
-                $name = $method->getName();
-                $cache['methods'][$name] = $anns;
+                if (isset($anns['get'])) {
+                    $cache['methods'][$anns['get']] = $method->getName();
+                }
             }
             $properties = $reflection->getProperties(ReflectionProperty::IS_PUBLIC | ReflectionProperty::IS_PROTECTED & ~ReflectionProperty::IS_STATIC);
             $cache['properties'] = [];
