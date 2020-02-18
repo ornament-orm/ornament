@@ -20,7 +20,8 @@ return function () : Generator {
 
     /**
      * Models can successfully register and apply decorations. The second
-     * field is decorated using constructor arguments.
+     * field is decorated using constructor arguments. We can also retrieve a
+     * virtual field via a getter method.
      */
     yield function () : void {
         $model = Wrapper::createObject((float)phpversion() >= 7.4 ? DecoratedModel74::class : DecoratedModel::class);
