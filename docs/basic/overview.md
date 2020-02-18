@@ -53,6 +53,5 @@ simply wrong:
 Ornament is an ORM toolkit that allows you to "decorate" your models (hence the
 name) with common functionality, while at the same time not forcing you to
 abandon your project's current "base model" (in case you were using one, but
-it's quite common). It also allows a much greater deal of flexibility in
-defining what gets persisted where, and how.
+it's quite common). What you end up storing where is not Ornament's concern.
 

@@ -12,13 +12,13 @@ where the data might be stored in a `page` table and a `page_i18n` table for the
 language-specific data.)
 
 Also, the use of extensive and/or complicated config files sucks. (XML? This
-is 2017, people!)
+is 2020, people!)
 
 Ornament's design goals are:
 
 - make it super-simple to use vanilla PHP classes as models;
 - promote the use of models as "dumb" data containers;
-- encourage offloading of storage logic to helpers classes (repositories);
+- encourage offloading of storage logic to helper classes ("repositories");
 - make models extensible via an easy plugin mechanism.
 
 ## Installation
@@ -33,10 +33,11 @@ Ornament models (or "entities" if you're used to Doctrine-speak) are really
 nothing more than vanilla PHP classes; there is no need to extend any base
 object of sorts (since you might want to do that in your own framework).
 
-Ornament is a _toolkit_, so it supplies a number of `Trait`s one can `use` to
-extend your models' behaviour beyond the ordinary.
+Ornament is a _toolkit_, so it supplies a number of `Trait`s one can `use` and
+auxiliary decorator classes to extend your models' behaviour beyond the
+ordinary.
 
-The most basic implementation would look as follows:
+The most basic implementation would look as follows (up to PHP 7.3):
 
 ```php
 <?php
@@ -49,14 +50,26 @@ class MyModel
     // it contains core functionality.
     use Model;
 
-    // All protected properties on a model are considered read-only.
+    /**
+     * All protected properties on a model are considered read-only.
+     *
+     * @var int
+     */
     protected $id;
 
-    // Public properties are read/write. To auto-decorate during setting, use
-    // the `Model::set()` method.
+    /**
+     * Public properties are read/write. To auto-decorate during setting, use
+     * the `Model::set()` method.
+     *
+     * @var string
+     */
     public $name;
 
-    // Private properties are just that: private. They're left alone:
+    /**
+     * Private properties are just that: private. They're left alone.
+     *
+     * @var string
+     */
     private $password;
 }
 
@@ -70,15 +83,35 @@ $model->name = 'Linus'; // Ok; public property.
 $model->id = 2; // Error: read-only property.
 ```
 
+As of PHP 7.4, Ornament fully supports type hinting properties instead of
+annotating them:
+
+```php
+<?php
+
+// ...
+class MyModel
+{
+    // ...
+
+    protected int $id;
+
+    // etc.
+}
+```
+
+PHP will take care of type coercion for builtins, while Ornament will handle
+more complex casing and decorating to you can also use classes as decorators
+(see below for more information).
+
 The above example didn't do much yet except exposing the protected `id` property
 as read-only. Note however that Ornament models also prevent mutating undefined
 properties; trying to set anything not explicitly set in the class definition
-will throw an `Error` mimicking PHP's internal error when accessing protected or
-private properties.
+will throw an `Error` mimicking PHP's internal error.
 
 ## Annotating and decorating models
 Ornament doesn't get _really_ useful until you start _decorating_ your models.
-This is done (mostly) by specifying _annotations_ (or, as of PHP7.4, type
+This is done (mostly) by specifying _annotations_ (or, as of PHP 7.4, type
 hinting for properties) on your properties and methods.
 
 Let's look at the simplest annotation possible: type coercion. Let's say we want
@@ -102,11 +135,16 @@ $model->set('id', '1');
 echo $model->id; // (int)1
 ```
 
-This works for all types supported by PHP's `settype` function.
+This works for all types supported by PHP's `settype` function. Type coercion is
+done automatically as of PHP 7.4; this is mainly useful for PHP 7.3.
 
-## Getters and setters
-Sometimes you'll want to specify your own getters and setters. No problem;
-define a method and annotate it with `@get PROPERTY` or `@set PROPERTY`:
+## Getters for virtual properties
+Ornament models support the concept of _virtual properties_ (which are, by
+definition, read-only).
+
+An example of a virtual property would be a model with a `firstname` and
+`lastname` property, and a getter for `fullname`. To mark a method as a getter,
+annotate it with `@get {property}`:
 
 ```php
 <?php
@@ -115,28 +153,18 @@ class MyModel
 {
     // ...
 
-    /** @get id */
-    public function exampleGetter()
+    /** @get fullname */
+    protected function exampleGetter() : string
     {
-        // A random ID between 1 and 100.
-        return rand(1, 100);
-    }
-
-    /** @set id */
-    public function exampleSetter(int $id) : int
-    {
-        // When setting, we multiply the id by 2.
-        return $id * 2;
+        return $this->firstname.' '.$this->lastname;
     }
 }
 ```
 
-Note that a _setter_ accepts a single parameter (the thing you want to set) and
-returns what you _actually_ want to set. The internal storage is further handled
-by the Ornament model, so no need to worry about the details.
-
-Getters work for public and protected properties; setters obviously only for
-public properties (since protected properties are read-only).
+The name and visibility of a getter (usually) don't matter; a best practice is
+to mark them as `protected` so they cannot be called from outside, and to give
+them a reasonably descriptive name for your own sanity (in the above example,
+`getFullname` would have been better).
 
 ## Decorator classes
 For more complex types you can also annotate a property with a _decorator
@@ -154,73 +182,103 @@ class MyModel
     // ...
 
     /**
-     * @var Nesbot\Carbon\Carbon
+     * @var Carbon\Carbon
+     * @construct "Amsterdam/Europe"
      */
     public $date;
 }
 ```
 
-> Note that you _must_ use the fully qualified classname; PHP cannot know
-> (well, at least not without doing scary voodoo on your sourcecode) which
-> namespaces were imported.
+> Note that you _must_ use the fully qualified classname in your `@var`
+> annotation; PHP cannot know (well, at least not without doing scary voodoo on
+> your sourcecode) which namespaces were imported. If it makes you (or your
+> editor happy) you may prefix with `\`, but I personally find that ugly and
+> it's implicit anyway since functions like `class_exists` _always_ work on a
+> fully qualified namespace.
 
-Each Decorator class must implement the `Ornament\Core\DecoratorInterface`
-interface. Usually this is done by extending `Ornament\Core\Decorator`, but it
-is allowed to write your own implementation. Decorator classes are instantied
-with the internal "status model" (a `StdClass`) and the name of the property to
-be decorated. This allows you to access the rest of the model too, if needed
-(example: a `fullname` decorated field which consists of `firstname` and
-`lastname` properties). To access the underlying value, use the `getSource()`
-method. Decorators also must implement a `__toString()` method to ensure
-decorated properties can be safely used (e.g. in an `echo` statement). For the
-abstract base decorator, this is implemented as `(string)$this->getSource()`
-which is usually what you want.
+Each Decorator class _must_ accept the underlying current value as its first
+parameter. Additional construction parameters can be defined via annotations
+like in the example.
 
-It is also possible to specify extra constructor arguments for the decorator
-using the `@construct` annotation. Multiple `@construct` arguments can be set;
-they will be passed as the second, third etc. arguments to the decorator's
-constructor. An exmaple:
+If you're on PHP 7.4, you can of course simply type hint the property:
 
 ```php
 <?php
+
+use Carbon\Carbon;
 
 class MyModel
 {
     // ...
 
     /**
-     * @var SomeDecorator
-     * @construct 1
-     * @construct 2
+     * @construct "Amsterdam/Europe"
      */
-    public $foo;
-
-}
-
-class SomeDecorator extends Ornament\Core\Decorator
-{
-    public function __construct(StdClass $model, string $property, int $arg1, int $arg2)
-    {
-        // ...
-    }
+    public Carbon $date;
 }
 ```
 
-If your decorator gets _really_ complex and cannot be instantiated using static
-arguments, one should use an `@get`ter.
+Note that constructor arguments can still be passed this way.
+
+If the class you want to use does _not_ take the underlying value as its first
+parameter, you'll need to wrap it. You can extend `Ornament\Core\Decorator` for
+that.
 
 > Caution: annotations are returned as either "the actual value" or, if
-> multiple annotations of the same name were specific, an array. There is no
-> way for Ornament to differentiate between "multiple constructor arguments"
-> and "a single argument with a simple array". So internally Ornament assumes
-> that if the `@construct` annotation is already an array, with an index `0`
-> set, and a `count()` larger than one, you are specifying multiple
-> constructor arguments. _This check will fail if you meant to specify just a
-> single argument, which happens to be a simple array with multiple elements_
-> (e.g. `[1, 2, 3]`).
+> multiple annotations of the same name were specified, an array. A corner case
+> is when you have a single additional argument which happens to be an array
+> (since it will be seen as multiple constructor arguments).
 >
-> In these corner cases, just supply a second (dummy) constructor argument so
-> the annotations will already be an array by the time Ornament inspects them.
+> In these corner cases, just supply a second (dummy) constructor argument to
+> force the correct values.
+
+It is recommended that a decorating class also supports a `__toString` method,
+so one can seamlessly pass decorated properties back to a storage engine.
+
+## PHP, PDO and `fetchObject`
+PDO's `fetchObject` and related methods try to be clever by injecting
+properties based on fetched database columns _before_ the constructor is called.
+PHP 7.4 doesn't like that, since a decorated property will be of the wrong type!
+
+For this reason, it's now considered best practice to use `PDO::FETCH_ASSOC` and
+feeding the result through either `Model::fromIterable` (for `fetch`) or
+`Model::fromIterableCollection` (for `fetchAll`).
+
+E.g.:
+
+```php
+<?php
+
+// ...
+return MyModel::fromIterable($stmt->fetch(PDO::FETCH_ASSOC));
+```
+
+Versions of Ornament <0.14 did not have this limitation as they specifically
+worked with `fetchObject`; this is no longer possible on PHP 7.4 so we strongly
+recommend you upgrade to 0.15 or higher. It is compatible with both PHP 7.3 as
+well as 7.4 (and upwards).
+
+## Custom object instantiation
+Ornament supplies a constructor that expects key/value pairs of data to inject
+into the model. Sometimes this is not what you want; maybe you're extending a
+base class that expects each property to be specified as an argument to the
+constructor (or whatever, e.g. Laravel's `fill` method).
+
+Default behaviour can be overridden using the `initTransformer` static method,
+passing a callback which takes the iterable `$data` as its only argument and
+must return the constructed object:
+
+```php
+<?php
+
+MyModel::initTransformer(function (iterable $data) : MyModel {
+    return new MyModel($data['id'], $data['password']);
+});
+```
+
+These transformers are on a _per class_ basis. If you need it for _all_ your
+models, you should make them extend a base class and call `initTransformer` on
+that.
 
 ## Loading and persisting models
 This is your job. Wait, what? Yes, Ornament is storage engine agnostic. You may
