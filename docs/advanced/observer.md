@@ -5,7 +5,7 @@ in implementing this quickly:
 
 ## Observers
 The Observer is the model that gets automatically updated. For instance, let's
-say our application allows `User`s to store `Message`s. For each `Message`
+say our application allows `User`s to receive `Message`s. For each `Message`
 created, the `User` must be notified. In this case, the Observer is the `User`
 model:
 
