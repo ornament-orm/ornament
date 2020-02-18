@@ -226,8 +226,6 @@ trait Model
             $args = [];
             if (isset($cache['properties'][$field]['construct'])) {
                 $args = is_array($cache['properties'][$field]['construct'])
-                    && isset($cache['properties'][$field]['construct'][0])
-                    && count($cache['properties'][$field]['construct']) > 1
                     ? $cache['properties'][$field]['construct']
                     : [$cache['properties'][$field]['construct']];
             }
