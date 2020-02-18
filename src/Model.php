@@ -26,7 +26,7 @@ trait Model
     /**
      * @var callable
      */
-    private static $arryToModelTransformer;
+    private static $arrayToModelTransformer;
 
     /**
      * Constructor.
