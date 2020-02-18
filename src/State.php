@@ -14,6 +14,9 @@ trait State
     public function isDirty() : bool
     {
         foreach ($this->__initial as $prop => $val) {
+            if ($prop == '__initial') {
+                continue;
+            }
             if ($this->isModified($prop)) {
                 return true;
             }
