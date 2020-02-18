@@ -17,11 +17,16 @@ use Traversable;
 trait Model
 {
     /**
-     * @var StdClass
+     * @var object
      *
      * Private storage of the model's initial state.
      */
     private $__initial;
+
+    /**
+     * @var callable
+     */
+    private static $arryToModelTransformer;
 
     /**
      * Constructor.
