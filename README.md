@@ -104,9 +104,13 @@ echo $model->id; // (int)1
 
 This works for all types supported by PHP's `settype` function.
 
-## Getters and setters
-Sometimes you'll want to specify your own getters and setters. No problem;
-define a method and annotate it with `@get PROPERTY` or `@set PROPERTY`:
+## Getters for virtual properties
+Ornament models support the concept of _virtual properties_ (which are, by
+definition, read-only).
+
+An example of a virtual property would be a model with a `firstname` and
+`lastname` property, and a getter for `fullname`. To mark a method as a getter,
+annotate it with `@get {property}`:
 
 ```php
 <?php
@@ -115,28 +119,18 @@ class MyModel
 {
     // ...
 
-    /** @get id */
-    public function exampleGetter()
+    /** @get fullname */
+    protected function exampleGetter() : string
     {
-        // A random ID between 1 and 100.
-        return rand(1, 100);
-    }
-
-    /** @set id */
-    public function exampleSetter(int $id) : int
-    {
-        // When setting, we multiply the id by 2.
-        return $id * 2;
+        return $this->firstname.' '.$this->lastname;
     }
 }
 ```
 
-Note that a _setter_ accepts a single parameter (the thing you want to set) and
-returns what you _actually_ want to set. The internal storage is further handled
-by the Ornament model, so no need to worry about the details.
-
-Getters work for public and protected properties; setters obviously only for
-public properties (since protected properties are read-only).
+The name and visibility of a getter (usually) don't matter; a best practice is
+to mark them as `protected` so they cannot be called from outside, and to give
+them a reasonably descriptive name for your own sanity (in the above example,
+`getFullname` would have been better).
 
 ## Decorator classes
 For more complex types you can also annotate a property with a _decorator
@@ -154,60 +148,45 @@ class MyModel
     // ...
 
     /**
-     * @var Nesbot\Carbon\Carbon
+     * @var Carbon\Carbon
+     * @construct "Amsterdam/Europe"
      */
     public $date;
 }
 ```
 
-> Note that you _must_ use the fully qualified classname; PHP cannot know
-> (well, at least not without doing scary voodoo on your sourcecode) which
-> namespaces were imported.
+> Note that you _must_ use the fully qualified classname in your `@var`
+> annotation; PHP cannot know (well, at least not without doing scary voodoo on
+> your sourcecode) which namespaces were imported.
 
-Each Decorator class must implement the `Ornament\Core\DecoratorInterface`
-interface. Usually this is done by extending `Ornament\Core\Decorator`, but it
-is allowed to write your own implementation. Decorator classes are instantied
-with the internal "status model" (a `StdClass`) and the name of the property to
-be decorated. This allows you to access the rest of the model too, if needed
-(example: a `fullname` decorated field which consists of `firstname` and
-`lastname` properties). To access the underlying value, use the `getSource()`
-method. Decorators also must implement a `__toString()` method to ensure
-decorated properties can be safely used (e.g. in an `echo` statement). For the
-abstract base decorator, this is implemented as `(string)$this->getSource()`
-which is usually what you want.
+Each Decorator class _must_ accept the underlying current value as its first
+parameter. Additional construction parameters can be defined via annotations
+like in the example.
 
-It is also possible to specify extra constructor arguments for the decorator
-using the `@construct` annotation. Multiple `@construct` arguments can be set;
-they will be passed as the second, third etc. arguments to the decorator's
-constructor. An exmaple:
+If the class you want to use does _not_ take the underlying value as its first
+parameter, you'll need to wrap it. You can extend `Ornament\Core\Decorator` for
+that.
+
+It is recommended that a decorating class also supports a `__toString` method,
+so one can seamlessly pass decorated properties back to a storage engine.
+
+## PHP, PDO and `fetchObject`
+PDO's `fetchObject` and related methods try to be clever by injecting
+properties based on fetched database columns _before_ the constructor is called.
+PHP7.4 doesn't like that, since a decorated property will be of the wrong type!
+
+For this reason, it's now considered best practice to use `PDO::FETCH_ASSOC` and
+feeding the result through either `Model::fromIterable` (for `fetch`) or
+`Model::fromIterableCollection` (for `fetchAll`).
+
+E.g.:
 
 ```php
 <?php
 
-class MyModel
-{
-    // ...
-
-    /**
-     * @var SomeDecorator
-     * @construct 1
-     * @construct 2
-     */
-    public $foo;
-
-}
-
-class SomeDecorator extends Ornament\Core\Decorator
-{
-    public function __construct(StdClass $model, string $property, int $arg1, int $arg2)
-    {
-        // ...
-    }
-}
+// ...
+return MyModel::fromIterable($stmt->fetch(PDO::FETCH_ASSOC));
 ```
-
-If your decorator gets _really_ complex and cannot be instantiated using static
-arguments, one should use an `@get`ter.
 
 > Caution: annotations are returned as either "the actual value" or, if
 > multiple annotations of the same name were specific, an array. There is no
