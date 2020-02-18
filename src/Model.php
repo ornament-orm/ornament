@@ -57,12 +57,12 @@ trait Model
      * Like `fromIterable`, only this accepts a _collection_ of iterable
      * inputs. Use with e.g. `PDO::fetchAll()`.
      *
-     * @param array $data
+     * @param iterable $data
      * @return array
      */
-    public static function fromIterableCollection(array $collection) : array
+    public static function fromIterableCollection(iterable $collection) : iterable
     {
-        array_walk($collection, function (&$item) : void {
+        array_walk($collection, function (iterable &$item) : void {
             $item = self::fromIterable($item);
         });
         return $collection;
