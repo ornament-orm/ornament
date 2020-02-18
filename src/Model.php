@@ -33,7 +33,7 @@ trait Model
     {
         if (isset($input)) {
             foreach ($input as $key => $value) {
-                $this->$key = $this->ornamentalize($this, $key, $value);
+                $this->$key = $this->ornamentalize($key, $value);
             }
         }
         $this->__initial = clone $this;
@@ -48,9 +48,8 @@ trait Model
      */
     public static function fromIterable(iterable $data) : object
     {
-        $class = new ReflectionClass(__CLASS__);
         self::initTransformer();
-        return call_user_func(self::$arrayToModelTransformer, $class, $data);
+        return call_user_func(self::$arrayToModelTransformer, $data);
     }
 
     /**
@@ -78,7 +77,8 @@ trait Model
     public static function initTransformer(callable $transformer = null) : void
     {
         if (!isset(self::$arrayToModelTransformer)) {
-            self::$arrayToModelTransformer = function (string $class, array $data) : object {
+            self::$arrayToModelTransformer = function (iterable $data) : object {
+                $class = __CLASS__;
                 return new $class($data);
             };
         }
@@ -98,75 +98,14 @@ trait Model
      */
     public function set(string $field, $value) : void
     {
-        $reflection = new ReflectionClass($this);
-        $property = $reflection->getProperty($field);
+        $property = new ReflectionProperty($this, $field);
         if (!$property->isPublic()) {
             throw new Error("Only public properties can be `set` ($field in ".get_class($this).")");
         }
         if ($property->isStatic()) {
             throw new Error("Only non-static properties can be `set` ($field in ".get_class($this).")");
         }
-        $this->$field = self::ornamentalize(new ReflectionClass($this), $field, $value);
-    }
-
-    /**
-     * Ornamentalize the requested field. Usually this is called for you, but on
-     * occasions you may need to call it manually.
-     *
-     * @param ReflectionClass $reflection
-     * @param string $field
-     * @param mixed $value
-     * @return mixed
-     */
-    protected static function ornamentalize(ReflectionClass $reflection, string $field, $value)
-    {
-        static $cache = [];
-        if (!$cache) {
-            $cache['class'] = new Annotations($reflection);
-            $cache['methods'] = [];
-            foreach ($reflection->getMethods() as $method) {
-                $anns = new Annotations($method);
-                $name = $method->getName();
-                $cache['methods'][$name] = $anns;
-            }
-            $properties = $reflection->getProperties(ReflectionProperty::IS_PUBLIC | ReflectionProperty::IS_PROTECTED & ~ReflectionProperty::IS_STATIC);
-            $cache['properties'] = [];
-            foreach ($properties as $property) {
-                $name = $property->getName();
-                $anns = new Annotations($property);
-                if ((float)phpversion() >= 7.4) {
-                    if ($type = $property->getType()) {
-                        $anns['var'] = $type->getName();
-                    }
-                }
-                $anns['readOnly'] = $property->isProtected();
-                $cache['properties'][$name] = $anns;
-            }
-        }
-        if (self::checkBaseType($cache['properties'][$field]['var'])) {
-            // As of PHP 7.4, type coercion is implicit when properties have
-            // been correctly type hinted.
-            if ((float)phpversion() < 7.4) {
-                settype($value, $cache['properties'][$field]['var']);
-            }
-            return $value;
-        } elseif (isset($cache['properties'][$field]['var'])) {
-            if (!class_exists($cache['properties'][$field]['var'])) {
-                throw new DecoratorClassNotFoundException($cache['properties'][$field]['var']);
-            }
-            if (!array_key_exists('Ornament\Core\DecoratorInterface', class_implements($cache['properties'][$field]['var']))) {
-                throw new DecoratorClassMustImplementDecoratorInterfaceException($cache['properties'][$field]['var']);
-            }
-            $args = [];
-            if (isset($cache['properties'][$field]['construct'])) {
-                $args = is_array($cache['properties'][$field]['construct'])
-                    && isset($cache['properties'][$field]['construct'][0])
-                    && count($cache['properties'][$field]['construct']) > 1
-                    ? $cache['properties'][$field]['construct']
-                    : [$cache['properties'][$field]['construct']];
-            }
-            return new $cache['properties'][$field]['var']($value, ...$args);
-        }
+        $this->$field = $this->ornamentalize($field, $value);
     }
 
     /**
@@ -188,10 +127,12 @@ trait Model
         try {
             $reflection = new ReflectionProperty($this, $prop);
         } catch (ReflectionException $e) {
-            throw new Error("Tried to get private or non-existing property $prop on ".get_class($this));
+            throw new Error("Tried to get non-existing property $prop on ".get_class($this));
         }
         if (($reflection->isPublic() || $reflection->isProtected()) && !$reflection->isAbstract()) {
             return $this->$prop;
+        } else {
+            throw new Error("Tried to get private or abstract property $prop on ".get_class($this));
         }
     }
 
@@ -251,6 +192,72 @@ trait Model
     {
         static $baseTypes = ['bool', 'int', 'float', 'string', 'array', 'object', 'null'];
         return in_array($type, $baseTypes);
+    }
+
+    /**
+     * Ornamentalize the requested field. Usually this is called for you, but on
+     * occasions you may need to call it manually.
+     *
+     * @param string $field
+     * @param mixed $value
+     * @return mixed
+     */
+    protected function ornamentalize(string $field, $value)
+    {
+        $cache = $this->__getModelPropertyDecorations($field);
+        if (self::checkBaseType($cache['properties'][$field]['var'])) {
+            // As of PHP 7.4, type coercion is implicit when properties have
+            // been correctly type hinted.
+            if ((float)phpversion() < 7.4) {
+                settype($value, $cache['properties'][$field]['var']);
+            }
+            return $value;
+        } elseif (isset($cache['properties'][$field]['var'])) {
+            if (!class_exists($cache['properties'][$field]['var'])) {
+                throw new DecoratorClassNotFoundException($cache['properties'][$field]['var']);
+            }
+            if (!array_key_exists('Ornament\Core\DecoratorInterface', class_implements($cache['properties'][$field]['var']))) {
+                throw new DecoratorClassMustImplementDecoratorInterfaceException($cache['properties'][$field]['var']);
+            }
+            $args = [];
+            if (isset($cache['properties'][$field]['construct'])) {
+                $args = is_array($cache['properties'][$field]['construct'])
+                    && isset($cache['properties'][$field]['construct'][0])
+                    && count($cache['properties'][$field]['construct']) > 1
+                    ? $cache['properties'][$field]['construct']
+                    : [$cache['properties'][$field]['construct']];
+            }
+            return new $cache['properties'][$field]['var']($value, ...$args);
+        }
+    }
+
+    protected function __getModelPropertyDecorations(string $field) : array
+    {
+        static $cache = [];
+        if (!$cache) {
+            $reflection = new ReflectionClass($this);
+            $cache['class'] = new Annotations($reflection);
+            $cache['methods'] = [];
+            foreach ($reflection->getMethods() as $method) {
+                $anns = new Annotations($method);
+                $name = $method->getName();
+                $cache['methods'][$name] = $anns;
+            }
+            $properties = $reflection->getProperties(ReflectionProperty::IS_PUBLIC | ReflectionProperty::IS_PROTECTED & ~ReflectionProperty::IS_STATIC);
+            $cache['properties'] = [];
+            foreach ($properties as $property) {
+                $name = $property->getName();
+                $anns = new Annotations($property);
+                if ((float)phpversion() >= 7.4) {
+                    if ($type = $property->getType()) {
+                        $anns['var'] = $type->getName();
+                    }
+                }
+                $anns['readOnly'] = $property->isProtected();
+                $cache['properties'][$name] = $anns;
+            }
+        }
+        return $cache;
     }
 }
 
