@@ -11,7 +11,7 @@ return function () : Generator {
      * Core models should have only the basic functionality: expose properties
      * via magic getters and setters but not private ones.
      */
-    yield function () {
+    yield function () : void {
         $model = Wrapper::createObject((float)phpversion() >= 7.4 ? CoreModel74::class : CoreModel::class);
         assert(isset($model->id));
         assert($model->id == 1);
@@ -22,7 +22,7 @@ return function () : Generator {
      * Models can successfully register and apply decorations. The second
      * field is decorated using constructor arguments.
      */
-    yield function () {
+    yield function () : void {
         $model = Wrapper::createObject((float)phpversion() >= 7.4 ? DecoratedModel74::class : DecoratedModel::class);
         $model->set('field', 2);
         assert((int)"{$model->field}" === 1);
@@ -33,7 +33,7 @@ return function () : Generator {
     /**
      * If we try to access a private property, an Error is thrown.
      */
-    yield function () {
+    yield function () : void {
         $model = Wrapper::createObject((float)phpversion() >= 7.4 ? CoreModel74::class : CoreModel::class);
         $e = null;
         try {
@@ -46,7 +46,7 @@ return function () : Generator {
     /**
      * If we try to modify a protected property, an Error is thrown.
      */
-    yield function () {
+    yield function () : void {
         $model = Wrapper::createObject((float)phpversion() >= 7.4 ? CoreModel74::class : CoreModel::class);
         $e = null;
         try {
