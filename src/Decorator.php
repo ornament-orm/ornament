@@ -6,19 +6,17 @@ use stdClass;
 
 abstract class Decorator implements DecoratorInterface
 {
-    protected $source;
+    protected $_source;
 
     /**
-     * Constructor. Pass in the parent model, property name and optional extra
-     * arguments (not used by default, but implementing classes might).
+     * Constructor. Pass in the original, mixed value.
      *
      * @param mixed $source;
-     * @param mixed ...$args
      * @return void
      */
-    public function __construct($source, ...$args)
+    public function __construct($source)
     {
-        $this->source = $source;
+        $this->_source = $source;
     }
 
     /**
@@ -28,7 +26,7 @@ abstract class Decorator implements DecoratorInterface
      */
     public function getSource()
     {
-        return $this->source;
+        return $this->_source;
     }
 
     /**
