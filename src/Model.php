@@ -173,7 +173,7 @@ trait Model
             return false;
         }
         if ($reflection->isPublic() || $reflection->isProtected()) {
-            return true;
+            return isset($this->$prop);
         }
         return false;
     }
@@ -188,6 +188,17 @@ trait Model
      */
     public function __index(int $index) : void
     {
+    }
+
+    public function getPersistableData() : array
+    {
+        $data = [];
+        foreach ($this->__getModelPropertyDecorations()['properties'] as $name => $anns) {
+            if (!$anns['readOnly']) {
+                $data[$name] = $this->$name ?? null;
+            }
+        }
+        return $data;
     }
 
     /**
@@ -214,6 +225,9 @@ trait Model
     protected function ornamentalize(string $field, $value)
     {
         $cache = $this->__getModelPropertyDecorations();
+        if (!isset($cache['properties'][$field])) {
+            throw new PropertyNotDefinedException(get_class($this), $field);
+        }
         if (self::checkBaseType($cache['properties'][$field]['var'])) {
             // As of PHP 7.4, type coercion is implicit when properties have
             // been correctly type hinted.
@@ -228,14 +242,7 @@ trait Model
             if (!array_key_exists('Ornament\Core\DecoratorInterface', class_implements($cache['properties'][$field]['var']))) {
                 throw new DecoratorClassMustImplementDecoratorInterfaceException($cache['properties'][$field]['var']);
             }
-            $args = [];
-            if (isset($cache['properties'][$field]['construct'])) {
-                $args = is_array($cache['properties'][$field]['construct'])
-                    && array_keys($cache['properties'][$field]['construct'])[0] != 0
-                    ? $cache['properties'][$field]['construct']
-                    : [$cache['properties'][$field]['construct']];
-            }
-            return new $cache['properties'][$field]['var']($value, ...$args);
+            return new $cache['properties'][$field]['var']($value);
         }
     }
 
@@ -252,7 +259,7 @@ trait Model
                     $cache['methods'][$anns['get']] = $method->getName();
                 }
             }
-            $properties = $reflection->getProperties(ReflectionProperty::IS_PUBLIC | ReflectionProperty::IS_PROTECTED & ~ReflectionProperty::IS_STATIC);
+            $properties = $reflection->getProperties((ReflectionProperty::IS_PUBLIC | ReflectionProperty::IS_PROTECTED) & ~ReflectionProperty::IS_STATIC);
             $cache['properties'] = [];
             foreach ($properties as $property) {
                 $name = $property->getName();
