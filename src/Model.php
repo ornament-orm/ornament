@@ -144,19 +144,6 @@ trait Model
             throw new Error("Tried to get private or abstract property $prop on ".get_class($this));
         }
     }
-
-    /**
-     * Overloaded setter.
-     *
-     * @param string $prop
-     * @param mixed $value
-     * @return mixed
-     */
-    public function __set(string $prop, $value)
-    {
-        $this->set($prop, $value);
-        return $this->$prop;
-    }
     
     /**
      * Check if a property is defined. Note that this will return true for
