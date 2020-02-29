@@ -10,16 +10,8 @@ class DecoratedModel
 
     /**
      * @var Ornament\Demo\SubtractOne
-     * @param -1
      */
     public $field;
-
-    /**
-     * @var Ornament\Demo\DecoratorWithConstructorArguments
-     * @construct 2
-     * @construct 3
-     */
-    public $anotherField;
 
     /**
      * @get virtual_property
@@ -27,7 +19,7 @@ class DecoratedModel
      */
     protected function getVirtualPropertyDemo() : string
     {
-        return "{$this->field} {$this->anotherField}";
+        return $this->field;
     }
 }
 
