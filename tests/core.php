@@ -27,9 +27,7 @@ return function () : Generator {
         $model = Wrapper::createObject((float)phpversion() >= 7.4 ? DecoratedModel74::class : DecoratedModel::class);
         $model->set('field', 2);
         assert((int)"{$model->field}" === 1);
-        $model->set('anotherField', 1);
-        assert((int)"{$model->anotherField}" === 6);
-        assert($model->virtual_property === "1 6");
+        assert($model->virtual_property === "1");
     };
 
     /**
