@@ -129,13 +129,13 @@ trait Model
      */
     public function __get(string $prop)
     {
+        $cache = $this->__getModelPropertyDecorations();
+        if (isset($cache['methods'][$prop])) {
+            return $this->{$cache['methods'][$prop]}();
+        }
         try {
             $reflection = new ReflectionProperty($this, $prop);
         } catch (ReflectionException $e) {
-            $cache = $this->__getModelPropertyDecorations();
-            if (isset($cache['methods'][$prop])) {
-                return $this->{$cache['methods'][$prop]}();
-            }
             throw new Error("Tried to get non-existing property $prop on ".get_class($this));
         }
         if (($reflection->isPublic() || $reflection->isProtected()) && !$reflection->isStatic()) {
@@ -154,6 +154,10 @@ trait Model
      */
     public function __isset(string $prop) : bool
     {
+        $cache = $this->__getModelPropertyDecorations();
+        if (isset($cache['methods'][$prop])) {
+            return $this->{$cache['methods'][$prop]}();
+        }
         try {
             $reflection = new ReflectionProperty($this, $prop);
         } catch (ReflectionException $e) {
