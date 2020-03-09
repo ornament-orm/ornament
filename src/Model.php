@@ -156,7 +156,7 @@ trait Model
     {
         $cache = $this->__getModelPropertyDecorations();
         if (isset($cache['methods'][$prop])) {
-            return $this->{$cache['methods'][$prop]}();
+            return true;
         }
         try {
             $reflection = new ReflectionProperty($this, $prop);
