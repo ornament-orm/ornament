@@ -36,6 +36,10 @@ trait Model
      */
     public function __construct(iterable $input = null)
     {
+        $cache = $this->__getModelPropertyDecorations();
+        foreach ($cache['properties'] as $field => $annotations) {
+            $this->$field = $this->ornamentalize($field, null);
+        }
         if (isset($input)) {
             foreach ($input as $key => $value) {
                 $this->$key = $this->ornamentalize($key, $value);
