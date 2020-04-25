@@ -38,7 +38,7 @@ trait Model
     {
         $cache = $this->__getModelPropertyDecorations();
         foreach ($cache['properties'] as $field => $annotations) {
-            $this->$field = $this->ornamentalize($field, null);
+            $this->$field = $this->ornamentalize($field, $this->$field ?? null);
         }
         if (isset($input)) {
             foreach ($input as $key => $value) {
