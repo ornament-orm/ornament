@@ -219,7 +219,7 @@ trait Model
         if (!isset($cache['properties'][$field])) {
             throw new PropertyNotDefinedException(get_class($this), $field);
         }
-        if (self::checkBaseType($cache['properties'][$field]['var'])) {
+        if (self::checkBaseType($cache['properties'][$field]['var'] ?? null)) {
             // As of PHP 7.4, type coercion is implicit when properties have
             // been correctly type hinted.
             if ((float)phpversion() < 7.4) {
@@ -234,6 +234,8 @@ trait Model
                 throw new DecoratorClassMustImplementDecoratorInterfaceException($cache['properties'][$field]['var']);
             }
             return new $cache['properties'][$field]['var']($value);
+        } else {
+            return $value;
         }
     }
 
